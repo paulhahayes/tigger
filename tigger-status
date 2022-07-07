@@ -1,0 +1,96 @@
+#!/bin/dash
+
+# check repo is initalised
+ if [ ! -d .tigger ];then 
+    >&2 echo "tigger-status: error: tigger repository directory .tigger not found"
+    exit 1
+fi
+
+# Create variables to access directories
+BRANCH="$(find .tigger/branches/head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
+COMMITINDEX="$(find ./.tigger/branches/head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
+HEAD=."$BRANCH"."$COMMITINDEX"
+CURRENTCOMMIT=."$BRANCH".$((COMMITINDEX-1))
+
+# Iterate over a list of all file names in the current directory and subdirectories
+for file in $(basename -a $(find . -type f) | sort | uniq); do
+
+    # variables used to compare the files in the current directory against
+    INDEXFILE=.tigger/index/"$HEAD"/"$file"
+    REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
+
+
+    # if a file doesnt begin with alphanumeric do not track it
+    if echo $file | grep -Ei '^([^0-9a-z])' >/dev/null; then
+        continue
+    fi
+    # if a file does not match the file regex do not track it
+    if echo $file | grep -Ei '[^a-z0-9._-]' >/dev/null;then
+        continue
+    fi
+
+
+    # Check if the file is in the Index
+    if [ -f "$file" ] && [ ! -f $INDEXFILE ]; then
+        echo "$file - untracked"
+        continue
+    fi
+
+    # the file has been added to the index but has not been commited
+    if [ -f "$INDEXFILE" ] && [ ! -f "$REPOFILE" ]; then
+        # the file exists in the working directory
+        if [ -f "$file" ]; then
+            if cmp -s $file $INDEXFILE; then
+                # the file is unchanged
+                echo "$file - added to index"
+            else
+                # the file has been update since it was added
+                echo "$file - added to index, file changed"
+            fi
+
+        # since being added to the index the file was removed from the working directory
+        elif [ ! -f "$file" ]; then
+            echo "$file - added to index, file deleted"
+        fi
+        continue
+    fi
+
+    # since the last add the file has been removed
+    if [ ! -f "$file" ] && [  -f $INDEXFILE ]; then
+        echo "$file - file deleted"
+        continue
+    fi
+
+    # the file is in the repo but has been removed elsewhere
+    if [ ! -f "$file" ] && [ ! -f $INDEXFILE ] && [  -f $REPOFILE ]; then
+        echo "$file - deleted"
+        continue
+    fi
+
+    # the file has been found in the the directoires and now is checked for changes
+    if [ -f "$file" ] && [ -f $INDEXFILE ] && [  -f $REPOFILE ]; then
+
+        # all the files are the same
+        if cmp -s $file $INDEXFILE && cmp -s $file $REPOFILE; then
+            echo "$file - same as repo"
+		    continue
+        fi
+
+        # all the files are different
+        if ! cmp -s $file $INDEXFILE && ! cmp -s $file $REPOFILE && ! cmp -s $INDEXFILE $REPOFILE; then
+            echo "$file - file changed, different changes staged for commit"
+		    continue
+        fi
+
+        # updates to the file have occured but are not yet added to the index
+        if ! cmp -s $file $INDEXFILE; then
+            echo "$file - file changed, changes not staged for commit"
+            continue
+        fi
+        # updates to the file have occured and have been added to the index
+        if cmp -s $file $INDEXFILE && ! cmp -s $file $REPOFILE;then
+            echo "$file - file changed, changes staged for commit"
+        fi
+
+    fi
+done
