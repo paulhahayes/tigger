@@ -1,0 +1,169 @@
+#!/bin/dash
+ 
+ # check repo is initalised
+ if [ ! -d .tigger ];then 
+    >&2 echo "tigger-rm: error: tigger repository directory .tigger not found"
+    exit 1
+fi
+# check for incorrect usage
+if  [ $# -lt 1 ]; then
+    >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+    exit 1
+fi
+
+# Create variables to access directories
+BRANCH="$(find .tigger/branches/head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
+COMMITINDEX="$(find ./.tigger/branches/head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
+HEAD=."$BRANCH"."$COMMITINDEX"
+CURRENTCOMMIT=."$BRANCH".$((COMMITINDEX-1))
+
+CACHED=0
+FORCED=0
+NOTFLAG=0
+FLAG=$1
+
+
+
+# Check the arguments and counts the flags
+for file in $@; do
+
+    if echo $file | grep -Ei '^([_]|[.])' >/dev/null; then
+        echo "tigger-rm: error: invalid filename '$file'"
+        exit 1
+    fi
+    if echo $file | grep -Ei '[^a-z0-9_.-]' >/dev/null; then
+
+        echo "tigger-rm: error: invalid filename '$file'"
+        exit 1
+    fi
+
+    # check for correct use of flags
+    if echo $file | grep -Eiv '((--cached)$|(--force)$|^([a-z0-9]))' >/dev/null; then 
+        >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+        exit 1
+    fi
+
+    if [ $file = "--cached" ]; then
+        # used to prevent situations like <./tigger-rm <file> --cached --force 
+        if [ $FLAG != "--cached" ] && [ $FLAG != "--force" ]; then
+
+            >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+            exit 1
+        else
+            # count the --cached 
+            CACHED=$((CACHED+1))
+        fi
+    elif [ $file = "--force" ]; then
+        # used to prevent situations like <./tigger-rm <file> --cached --force 
+        if [ $FLAG != "--cached" ] && [ $FLAG != "--force" ]; then
+            >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+            exit 1
+        else
+            # count the --force
+            FORCED=$((FORCED+1))
+    
+        fi
+    else
+        # used to prevent situations like <./tigger-rm <file> --cached --force 
+        FLAG=$file
+        NOTFLAG=$((NOTFLAG+1))
+    fi
+
+
+done
+
+if [ $NOTFLAG -eq 0 ]; then 
+    >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+    exit 1
+fi
+# Firstly conduct error checking, if any of the arguments
+# have an issue the program exits before making changes
+
+
+
+# --force appiled -  bypasses some errors
+if [ $FORCED -gt 0 ];then
+
+    #check the files first
+    for file in "$@"; do
+
+        # skip if the arugment is a flag
+        if [ $file = "--cached" ] || [ $file = "--force" ]; then
+            continue
+        fi
+        # 
+        INDEXFILE=.tigger/index/"$HEAD"/"$file"
+        REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
+
+        # Exit program if the file cannot be found in the index 
+        if [ ! -f "$INDEXFILE" ]; then
+            >&2 echo tigger-rm: error: "'$file'" is not in the tigger repository
+            exit 1
+        fi
+    done
+
+# --cached applied bypasses some errors
+elif [ $CACHED -gt 0 ]; then
+
+    for file in "$@"; do
+        # skip if the arugment is a flag
+        if [ "$file" = "--cached" ] || [ "$file" = "--force" ]; then
+            continue
+        fi
+        INDEXFILE=.tigger/index/"$HEAD"/"$file"
+        REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
+
+        if [ ! -f "$INDEXFILE" ] && [ ! -f "$REPOFILE" ]; then
+                >&2 echo "tigger-rm: error: '$file' is not in the tigger repository"
+                exit 1
+        fi
+
+        if ! cmp -s "$file" "$INDEXFILE" && ! cmp -s "$INDEXFILE" "$REPOFILE"; then
+            >&2 echo "tigger-rm: error: '$file' in index is different to both the working file and the repository"
+            exit 1
+        fi
+     
+    done
+
+# no flag applied - full error checking
+else
+    for file in "$@"; do
+
+        INDEXFILE=.tigger/index/"$HEAD"/"$file"
+        REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
+
+
+        if [ ! -f "$INDEXFILE" ]; then
+            >&2 echo tigger-rm: error: "'$file'" is not in the tigger repository
+            exit 1
+        fi
+
+        if ! cmp "$file" "$REPOFILE" -s && cmp -s "$INDEXFILE" "$REPOFILE"; then
+            >&2 echo "tigger-rm: error: '$file' in the repository is different to the working file"
+            exit 1
+        fi
+
+        if ! cmp -s "$file" "$INDEXFILE" && ! cmp -s "$file" "$REPOFILE"; then
+            >&2 echo "tigger-rm: error: '$file' in index is different to both the working file and the repository"
+            exit 1
+        fi
+
+        if ! cmp -s "$INDEXFILE" "$REPOFILE"; then
+            >&2 echo "tigger-rm: error: '$file' has staged changes in the index"
+            exit 1
+        fi
+
+    done
+fi
+
+
+# remove the file from the index and current directory
+for file in "$@"; do
+    INDEXFILE=.tigger/index/"$HEAD"/"$file"
+    REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
+    rm "$INDEXFILE" 2>/dev/null
+    if [ $CACHED -eq 0 ]; then
+        rm -f "$file" 2>/dev/null
+    fi
+
+done
