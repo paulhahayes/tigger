@@ -6,9 +6,9 @@ if [ -d .tigger ]; then
     exit 1
 fi
 
-# raise error if the .git folder exists
+# raise error if a .git folder exists
 if [ -d .git ]; then
-    >&2 echo tigger-init: error: can not run tigger because .git present in current directory
+    >&2 echo "tigger-init: error: can not run tigger because .git present in current directory"
     exit 1
 fi
 
