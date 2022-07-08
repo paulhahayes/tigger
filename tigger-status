@@ -7,10 +7,11 @@
 fi
 
 # Create variables to access directories
-BRANCH="$(find .tigger/branches/head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
-COMMITINDEX="$(find ./.tigger/branches/head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
-HEAD=."$BRANCH"."$COMMITINDEX"
-CURRENTCOMMIT=."$BRANCH".$((COMMITINDEX-1))
+BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
+BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
+HEAD=."$BRANCH"."$BRANCHINDEX"
+COMMITINDEX=$(wc -l < .tigger/.log )
+CURRENTCOMMIT=$((COMMITINDEX-1))
 
 # Iterate over a list of all file names in the current directory and subdirectories
 for file in $(basename -a $(find . -type f) | sort | uniq); do
