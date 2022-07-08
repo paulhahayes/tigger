@@ -25,51 +25,62 @@ if ! [ -d .tigger/branches/"$1"  ]; then
 fi
 
 
-
 # Create variables to access directories
+
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
 BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
-HEAD=."$BRANCH"."$BRANCHINDEX"
-COMMITINDEX=$(wc -l < .tigger/.log )
-CURRENTCOMMIT="$(cat .tigger/branches/"$BRANCH"/.commitindex)"
 
-if [ $1 = .tigger/branches/.head/"$BRANCH"  ]; then
-    >&2 echo "Already on 'master'"
+if [ $1 = "$BRANCH" ]; then
+    >&2 echo "Already on '$1'"
     exit 1
 fi
 TARGETBRANCH="$1"
 
 
-
-
-
 if  diff .tigger/branches/"$BRANCH"/.commitindex .tigger/branches/"$TARGETBRANCH"/.commitindex >/dev/null; then
+    continue
+    # mkdir -p .tigger/.headinfo
+    # mv .tigger/branches/.head/"$BRANCH" .tigger/.headinfo
+    # if ! mv .tigger/.headinfo/"$TARGETBRANCH" tigger/branches/.head/ 2>/dev/null; then
+    #     mkdir .tigger/branches/.head/$TARGETBRANCH && touch .tigger/branches/.head/$TARGETBRANCH/0
+    # fi
+    #     echo "Switched to branch '$TARGETBRANCH'"
+    # exit 0
 
-    mkdir -p .tigger/.headinfo
-    mv .tigger/branches/.head/"$BRANCH" .tigger/.headinfo
-    if ! mv .tigger/.headinfo/"$TARGETBRANCH" tigger/branches/.head/ 2>/dev/null; then
-        mkdir .tigger/branches/.head/$TARGETBRANCH && touch .tigger/branches/.head/$TARGETBRANCH/0
-    fi
-    echo "Switched to branch '$TARGETBRANCH'"
-    exit 0
 else
 
-    for file in .tigger/commits/$CURRENTCOMMIT/*; do
-        file="$(basename "$file")"
-    # #     #if the file is not shared remove it from the repo?
-    if ! [ -f .tigger/$TARGETBRANCH/$file ]; then
-        rm -f $file
+    for file in $(basename -a $(find .tigger/branches/$BRANCH -type f )); do
+        # if [ $file = ".commitindex" ] || [ $file = ".branchindex" ];then
+        #     continue
+        # fi
+        # #     #if the file is not shared remove it from the repo?
+        if ! [ -f .tigger/$TARGETBRANCH/$file ]; then
+
+            rm -f $file 
+        # MAYBE LOG THE FILES INCASE WE HAVE TO RESTORE THEM
         fi
     done
 
-    for file in .tigger/branches/$TARGETBRANCH/*; do
-        file="$(basename "$file")"
-        # echo $file
+    for file in $(basename -a $(find  .tigger/branches/$TARGETBRANCH -type f )); do
+        if [ $file = ".commitindex" ] || [ $file = ".branchindex" ];then
+            continue
+        fi
         cp .tigger/branches/$TARGETBRANCH/$file .
     done
 
 
 fi
+
+    mkdir -p .tigger/.headinfo
+    cp -R .tigger/branches/.head/"$BRANCH" .tigger/.headinfo
+    rm -r .tigger/branches/.head/"$BRANCH"
+    if ! cp -R .tigger/.headinfo/"$TARGETBRANCH" tigger/branches/.head/ 2>/dev/null; then
+        mkdir .tigger/branches/.head/$TARGETBRANCH && touch .tigger/branches/.head/$TARGETBRANCH/0
+    else
+    rm -r .tigger/.headinfo/"$TARGETBRANCH"
+    fi
+    echo "Switched to branch '$TARGETBRANCH'"
+    exit 0
 
 # if a file is untrack leave it
 

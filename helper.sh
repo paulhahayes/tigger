@@ -68,3 +68,21 @@ touch third.txt
 ./tigger-commit -m second
 ./tigger-checkout master
 }
+
+
+ch() {
+    rm -r -f .tigger
+./tigger-init
+touch a
+./tigger-add a
+./tigger-commit -m commit-0
+./tigger-branch b1
+./tigger-checkout b1
+touch b
+./tigger-add b
+./tigger-commit -m commit-1
+./tigger-checkout master
+./tigger-branch b2
+./tigger-checkout b2
+
+}

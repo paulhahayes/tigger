@@ -41,7 +41,7 @@ for file in "$@"; do
     fi
 
     # Either add or remove the file from the index
-    if [ -f $file ]; then 
+    if [ -f "$file" ]; then 
         cp "$file" .tigger/index/"$HEAD"
     else 
         rm -f .tigger/index/"$HEAD"/"$file"

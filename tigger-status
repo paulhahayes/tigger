@@ -22,17 +22,17 @@ for file in $(basename -a $(find . -type f) | sort | uniq); do
 
 
     # if a file doesnt begin with alphanumeric do not track it
-    if echo $file | grep -Ei '^([^0-9a-z])' >/dev/null; then
+    if echo "$file" | grep -Ei '^([^0-9a-z])' >/dev/null; then
         continue
     fi
     # if a file does not match the file regex do not track it
-    if echo $file | grep -Ei '[^a-z0-9._-]' >/dev/null;then
+    if echo "$file" | grep -Ei '[^a-z0-9._-]' >/dev/null;then
         continue
     fi
 
 
     # Check if the file is in the Index
-    if [ -f "$file" ] && [ ! -f $INDEXFILE ]; then
+    if [ -f "$file" ] && [ ! -f "$INDEXFILE" ]; then
         echo "$file - untracked"
         continue
     fi
@@ -41,7 +41,7 @@ for file in $(basename -a $(find . -type f) | sort | uniq); do
     if [ -f "$INDEXFILE" ] && [ ! -f "$REPOFILE" ]; then
         # the file exists in the working directory
         if [ -f "$file" ]; then
-            if cmp -s $file $INDEXFILE; then
+            if cmp -s "$file" "$INDEXFILE"; then
                 # the file is unchanged
                 echo "$file - added to index"
             else
@@ -57,39 +57,39 @@ for file in $(basename -a $(find . -type f) | sort | uniq); do
     fi
 
     # since the last add the file has been removed
-    if [ ! -f "$file" ] && [  -f $INDEXFILE ]; then
+    if [ ! -f "$file" ] && [  -f "$INDEXFILE" ]; then
         echo "$file - file deleted"
         continue
     fi
 
     # the file is in the repo but has been removed elsewhere
-    if [ ! -f "$file" ] && [ ! -f $INDEXFILE ] && [  -f $REPOFILE ]; then
+    if [ ! -f "$file" ] && [ ! -f "$INDEXFILE" ] && [  -f "$REPOFILE" ]; then
         echo "$file - deleted"
         continue
     fi
 
     # the file has been found in the the directoires and now is checked for changes
-    if [ -f "$file" ] && [ -f $INDEXFILE ] && [  -f $REPOFILE ]; then
+    if [ -f "$file" ] && [ -f "$INDEXFILE" ] && [  -f "$REPOFILE" ]; then
 
         # all the files are the same
-        if cmp -s $file $INDEXFILE && cmp -s $file $REPOFILE; then
+        if cmp -s "$file" "$INDEXFILE" && cmp -s "$file" "$REPOFILE"; then
             echo "$file - same as repo"
 		    continue
         fi
 
         # all the files are different
-        if ! cmp -s $file $INDEXFILE && ! cmp -s $file $REPOFILE && ! cmp -s $INDEXFILE $REPOFILE; then
+        if ! cmp -s "$file" "$INDEXFILE" && ! cmp -s "$file" "$REPOFILE" && ! cmp -s "$INDEXFILE" "$REPOFILE"; then
             echo "$file - file changed, different changes staged for commit"
 		    continue
         fi
 
         # updates to the file have occured but are not yet added to the index
-        if ! cmp -s $file $INDEXFILE; then
+        if ! cmp -s "$file" "$INDEXFILE"; then
             echo "$file - file changed, changes not staged for commit"
             continue
         fi
         # updates to the file have occured and have been added to the index
-        if cmp -s $file $INDEXFILE && ! cmp -s $file $REPOFILE;then
+        if cmp -s "$file" "$INDEXFILE" && ! cmp -s "$file" "$REPOFILE";then
             echo "$file - file changed, changes staged for commit"
         fi
 

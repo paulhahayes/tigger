@@ -47,36 +47,35 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
 
     # adds changes
 
-    mkdir .tigger/commits/$COMMITINDEX/
+    mkdir .tigger/commits/"$COMMITINDEX"/
 
     if find .tigger/index/"$HEAD"  -maxdepth 0  -empty | ifne false; then
         for file in .tigger/index/"$HEAD"/*; do
-            cp -r "$file" .tigger/commits/$COMMITINDEX >/dev/null
+            cp -r "$file" .tigger/commits/"$COMMITINDEX" >/dev/null
         done
     fi
 
 
     # set up for the next index
     NEWINDEX=$((BRANCHINDEX+1)) 
-    touch .tigger/branches/.head/"$BRANCH"/$NEWINDEX
+    touch .tigger/branches/.head/"$BRANCH"/"$NEWINDEX"
 
     #make a new index and copy the COMMITINDEX files in
-    mkdir -p .tigger/index/."$BRANCH".$NEWINDEX
+    mkdir -p .tigger/index/."$BRANCH"."$NEWINDEX"
     if find .tigger/index/"$HEAD"  -maxdepth 0  -empty | ifne false; then
-        cp -r .tigger/index/"$HEAD"/* .tigger/index/."$BRANCH".$NEWINDEX >/dev/null
+        cp -r .tigger/index/"$HEAD"/* .tigger/index/."$BRANCH"."$NEWINDEX" >/dev/null
     
     fi
 
     echo Committed as commit "$COMMITINDEX"
     # update the current branch
-    cp -r .tigger/commits/$CURRENTCOMMIT/* .tigger/branches/"$BRANCH" 2>/dev/null
-    echo "$CURRENTCOMMIT" > .tigger/branches/"$BRANCH"/.commitindex
+    cp -r .tigger/commits/"$COMMITINDEX"/* .tigger/branches/"$BRANCH"  2>/dev/null
+    echo "$COMMITINDEX" > .tigger/branches/"$BRANCH"/.commitindex
     echo "$BRANCHINDEX" > .tigger/branches/"$BRANCH"/.branchindex
 
 # commit all
-elif [ "$1" = "-a" ] && [ "$2" = "-m" ] && [ ! -z "$3" ]; then
+elif [ "$1" = "-a" ] && [ "$2" = "-m" ] && [ -n "$3" ]; then
     MESSAGE="$3"
-    
     # update files if they are in the index
     for file in .tigger/index/"$HEAD"/*; do
         fileCurrDir="$(basename "$file")"

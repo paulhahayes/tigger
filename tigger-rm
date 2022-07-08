@@ -25,27 +25,27 @@ FLAG=$1
 
 
 # Check the arguments and counts the flags
-for file in $@; do
+for file in "$@"; do
 
-    if echo $file | grep -Ei '^([_]|[.])' >/dev/null; then
+    if echo "$file" | grep -Ei '^([_]|[.])' >/dev/null; then
         echo "tigger-rm: error: invalid filename '$file'"
         exit 1
     fi
-    if echo $file | grep -Ei '[^a-z0-9_.-]' >/dev/null; then
+    if echo "$file" | grep -Ei '[^a-z0-9_.-]' >/dev/null; then
 
         echo "tigger-rm: error: invalid filename '$file'"
         exit 1
     fi
 
     # check for correct use of flags
-    if echo $file | grep -Eiv '((--cached)$|(--force)$|^([a-z0-9]))' >/dev/null; then 
+    if echo "$file" | grep -Eiv '((--cached)$|(--force)$|^([a-z0-9]))' >/dev/null; then 
         >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
         exit 1
     fi
 
-    if [ $file = "--cached" ]; then
+    if [ "$file" = "--cached" ]; then
         # used to prevent situations like <./tigger-rm <file> --cached --force 
-        if [ $FLAG != "--cached" ] && [ $FLAG != "--force" ]; then
+        if [ "$FLAG" != "--cached" ] && [ "$FLAG" != "--force" ]; then
 
             >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
             exit 1
@@ -53,9 +53,9 @@ for file in $@; do
             # count the --cached 
             CACHED=$((CACHED+1))
         fi
-    elif [ $file = "--force" ]; then
+    elif [ "$file" = "--force" ]; then
         # used to prevent situations like <./tigger-rm <file> --cached --force 
-        if [ $FLAG != "--cached" ] && [ $FLAG != "--force" ]; then
+        if [ "$FLAG" != "--cached" ] && [ "$FLAG" != "--force" ]; then
             >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
             exit 1
         else
@@ -65,14 +65,14 @@ for file in $@; do
         fi
     else
         # used to prevent situations like <./tigger-rm <file> --cached --force 
-        FLAG=$file
+        FLAG="$file"
         NOTFLAG=$((NOTFLAG+1))
     fi
 
 
 done
 
-if [ $NOTFLAG -eq 0 ]; then 
+if [ "$NOTFLAG" -eq 0 ]; then 
     >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
     exit 1
 fi
@@ -82,13 +82,13 @@ fi
 
 
 # --force appiled -  bypasses some errors
-if [ $FORCED -gt 0 ];then
+if [ "$FORCED" -gt 0 ];then
 
     #check the files first
     for file in "$@"; do
 
         # skip if the arugment is a flag
-        if [ $file = "--cached" ] || [ $file = "--force" ]; then
+        if [ "$file" = "--cached" ] || [ "$file" = "--force" ]; then
             continue
         fi
         # 
@@ -103,7 +103,7 @@ if [ $FORCED -gt 0 ];then
     done
 
 # --cached applied bypasses some errors
-elif [ $CACHED -gt 0 ]; then
+elif [ "$CACHED" -gt 0 ]; then
 
     for file in "$@"; do
         # skip if the arugment is a flag
@@ -162,7 +162,7 @@ for file in "$@"; do
     INDEXFILE=.tigger/index/"$HEAD"/"$file"
     REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
     rm "$INDEXFILE" 2>/dev/null
-    if [ $CACHED -eq 0 ]; then
+    if [ "$CACHED" -eq 0 ]; then
         rm -f "$file" 2>/dev/null
     fi
 

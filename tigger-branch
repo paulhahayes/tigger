@@ -13,15 +13,15 @@ if find .tigger/commits/  -maxdepth 0 ! -empty | ifne false; then
 fi
 
 # Create variables to access directories
-COMMITINDEX=$(wc -l < .tigger/.log )
-CURRENTCOMMIT=$((COMMITINDEX-1))
+
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
 BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
 HEAD=."$BRANCH"."$BRANCHINDEX"
+CURRENTCOMMIT=$(cat .tigger/branches/"$BRANCH"/.commitindex)
 
 
 # check if flags are correct
-if echo $1 | grep -Ei '^-[^d]' >/dev/null; then
+if echo "$1" | grep -Ei '^-[^d]' >/dev/null; then
         1>&2 echo "usage: tigger-branch [-d] <branch>"
         exit 1
 fi
@@ -29,72 +29,72 @@ fi
 # print branch names
 if [ "$#" -eq 0 ]; then 
     for BRANCHES in .tigger/branches/*; do
-        echo $BRANCHES | xargs basename 
+        echo "$BRANCHES" | xargs basename 
     done
 # delete a branch
 elif [ "$1" = -d ] && [ "$#" -eq 2 ]; then
     TARGETBRANCH="$2"
 
-    if echo $TARGETBRANCH | grep '^[-]' >/dev/null; then
+    if echo "$TARGETBRANCH" | grep '^[-]' >/dev/null; then
         1>&2 echo "usage: tigger-branch [-d] <branch>"
         exit 1
     fi
 
     #check the that selected branch isn't master
-    if [ $TARGETBRANCH = "master" ]; then
+    if [ "$TARGETBRANCH" = "master" ]; then
         1>&2 echo "tigger-branch: error: can not delete branch 'master'"
         exit 1
     fi
     # check the that selected branch exists
-    if ! [ -d .tigger/branches/$TARGETBRANCH ]; then
+    if ! [ -d .tigger/branches/"$TARGETBRANCH" ]; then
         1>&2 echo "tigger-branch: error: branch '$TARGETBRANCH' doesn't exist"
         exit 1
     fi
 
     # delete the branch from the branches directory
-    rm -r ".tigger/branches/$TARGETBRANCH"
+    rm -r .tigger/branches/"$TARGETBRANCH"
  
     # remove each index
     for index in $(find .tigger/index/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;); do
-    if echo $index | grep -E "^(.$TARGETINDEX.[0-9]*)" >/dev/null; then
-       rm -r .tigger/index/$index
+    if echo "$index" | grep -E "^(."$TARGETINDEX".[0-9]*)" >/dev/null; then
+       rm -r .tigger/index/"$index"
     fi
     done
     echo "Deleted branch '$TARGETBRANCH'"
 
-elif [ $# -eq 1 ]; then
+elif [ "$#" -eq 1 ]; then
 
     TARGETBRANCH="$1"
     
-    if echo $TARGETBRANCH | grep -Ei '^([_]|[.])' >/dev/null; then
+    if echo "$TARGETBRANCH" | grep -Ei '^([_]|[.])' >/dev/null; then
         echo "tigger-branch: error: invalid filename '$TARGETBRANCH'"
         exit 1
     fi
 
-    if echo $TARGETBRANCH | grep -Ei '^([0-9]*)$' >/dev/null; then
+    if echo "$TARGETBRANCH" | grep -Ei '^([0-9]*)$' >/dev/null; then
         echo "tigger-branch: error: invalid filename '$TARGETBRANCH'"
         exit 1
     fi
 
-    if echo $TARGETBRANCH | grep -Ei '[^a-z0-9_.-]' >/dev/null; then
+    if echo "$TARGETBRANCH" | grep -Ei '[^a-z0-9_.-]' >/dev/null; then
         echo "tigger-branch: error: invalid filename '$TARGETBRANCH'"
         exit 1
     fi
 
 
-    if  [ -d .tigger/branches/$TARGETBRANCH ]; then
+    if  [ -d .tigger/branches/"$TARGETBRANCH" ]; then
         1>&2 echo "tigger-branch: error: branch '$1' already exists"
         exit 1
     fi
 
 
     # make a new branch
-    mkdir -p .tigger/branches/$TARGETBRANCH
-    mkdir -p .tigger/index/.$TARGETBRANCH.0
-    cp -r .tigger/commits/$CURRENTCOMMIT/* .tigger/branches/$TARGETBRANCH/
+    mkdir -p .tigger/branches/"$TARGETBRANCH"
+    mkdir -p .tigger/index/."$TARGETBRANCH".0
+    cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/branches/"$TARGETBRANCH"/
     # add the files to be ready to commited
-    cp -r .tigger/commits/$CURRENTCOMMIT/* .tigger/index/.$TARGETBRANCH.0
-    echo $CURRENTCOMMIT > .tigger/branches/$TARGETBRANCH/.commitindex
+    cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/index/."$TARGETBRANCH".0
+    echo "$CURRENTCOMMIT" > .tigger/branches/"$TARGETBRANCH"/.commitindex
 else 
     1>&2 echo "usage: tigger-branch [-d] <branch>"
     exit 1
