@@ -6,9 +6,9 @@ if [ -d .tigger ]; then
     exit 1
 fi
 
-# raise error if a .git folder exists
+# raise error if the .git folder exists
 if [ -d .git ]; then
-    >&2 echo "tigger-init: error: can not run tigger because .git present in current directory"
+    >&2 echo tigger-init: error: can not run tigger because .git present in current directory
     exit 1
 fi
 
@@ -22,7 +22,7 @@ mkdir .tigger/index
 mkdir -p .tigger/branches/master
 
 # create a 'head' branch which is the active branch and add a version number
-mkdir -p .tigger/branches/head/master && touch .tigger/branches/head/master/0
+mkdir -p .tigger/branches/.head/master && touch .tigger/branches/.head/master/0
 
 # create a directory for commits
 mkdir .tigger/commits
