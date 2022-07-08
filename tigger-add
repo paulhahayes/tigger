@@ -9,12 +9,10 @@ if  [ ! -d .tigger ];then
     exit 1
 fi
 
-
 # Verbose but safe way of getting the branch name of the current head 
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
 BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
 HEAD=."$BRANCH"."$BRANCHINDEX"
-
 
 # error checking loop first
 for file in "$@"; do
@@ -35,17 +33,16 @@ done
 # implmentation loop
 for file in "$@"; do
 
-    # check if the index exists
-    if [ ! -d .tigger/index/"$HEAD" ]; then
-        mkdir -p .tigger/index/"$HEAD"
-    fi
-
+    mkdir -p .tigger/index/"$HEAD"
+    
     # Either add or remove the file from the index
     if [ -f "$file" ]; then 
         cp "$file" .tigger/index/"$HEAD"
     else 
         rm -f .tigger/index/"$HEAD"/"$file"
     fi
-
 done
 
+### NOTE ONLY ADDED FOR SUBSET 2 ###
+mkdir -p .tigger/changes
+cp -r .tigger/index/"$HEAD"/* .tigger/changes

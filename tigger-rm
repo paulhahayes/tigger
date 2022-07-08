@@ -18,6 +18,7 @@ HEAD=."$BRANCH"."$BRANCHINDEX"
 COMMITINDEX=$(wc -l < .tigger/.log )
 CURRENTCOMMIT=$((COMMITINDEX-1))
 
+# Variables used in the error checking
 CACHED=0
 FORCED=0
 NOTFLAG=0
@@ -72,16 +73,16 @@ for file in "$@"; do
 
 done
 
+# if the flags are not strictly at the front of the arguments the program exits
 if [ "$NOTFLAG" -eq 0 ]; then 
     >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
     exit 1
 fi
+
 # Firstly conduct error checking, if any of the arguments
 # have an issue the program exits before making changes
 
-
-
-# --force appiled -  bypasses some errors
+# --force appiled - bypasses some errors
 if [ "$FORCED" -gt 0 ];then
 
     #check the files first
@@ -91,7 +92,8 @@ if [ "$FORCED" -gt 0 ];then
         if [ "$file" = "--cached" ] || [ "$file" = "--force" ]; then
             continue
         fi
-        # 
+
+        # Variables to compare the working file with the INDEX and REPO file 
         INDEXFILE=.tigger/index/"$HEAD"/"$file"
         REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
 
@@ -102,7 +104,7 @@ if [ "$FORCED" -gt 0 ];then
         fi
     done
 
-# --cached applied bypasses some errors
+# --cached applied - bypasses some errors
 elif [ "$CACHED" -gt 0 ]; then
 
     for file in "$@"; do
@@ -110,14 +112,18 @@ elif [ "$CACHED" -gt 0 ]; then
         if [ "$file" = "--cached" ] || [ "$file" = "--force" ]; then
             continue
         fi
+
+        # Variables to compare the working file with the INDEX and REPO file 
         INDEXFILE=.tigger/index/"$HEAD"/"$file"
         REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
 
+        # check that the file can be actually removed from the tigger repo
         if [ ! -f "$INDEXFILE" ] && [ ! -f "$REPOFILE" ]; then
                 >&2 echo "tigger-rm: error: '$file' is not in the tigger repository"
                 exit 1
         fi
-
+        
+        # check the state of the changes to the file
         if ! cmp -s "$file" "$INDEXFILE" && ! cmp -s "$INDEXFILE" "$REPOFILE"; then
             >&2 echo "tigger-rm: error: '$file' in index is different to both the working file and the repository"
             exit 1
@@ -129,25 +135,29 @@ elif [ "$CACHED" -gt 0 ]; then
 else
     for file in "$@"; do
 
+        # Variables to compare the working file with the INDEX and REPO file 
         INDEXFILE=.tigger/index/"$HEAD"/"$file"
         REPOFILE=.tigger/commits/"$CURRENTCOMMIT"/"$file"
 
-
+        # check the file is in the index
         if [ ! -f "$INDEXFILE" ]; then
             >&2 echo tigger-rm: error: "'$file'" is not in the tigger repository
             exit 1
         fi
-
+        
+        # check if the file is modifed but hasn't been commit
         if ! cmp "$file" "$REPOFILE" -s && cmp -s "$INDEXFILE" "$REPOFILE"; then
             >&2 echo "tigger-rm: error: '$file' in the repository is different to the working file"
             exit 1
         fi
 
+        # check the state of the changes to the file
         if ! cmp -s "$file" "$INDEXFILE" && ! cmp -s "$file" "$REPOFILE"; then
             >&2 echo "tigger-rm: error: '$file' in index is different to both the working file and the repository"
             exit 1
         fi
-
+        
+        # check if the file is modifed but hasn't been commit
         if ! cmp -s "$INDEXFILE" "$REPOFILE"; then
             >&2 echo "tigger-rm: error: '$file' has staged changes in the index"
             exit 1

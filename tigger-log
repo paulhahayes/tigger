@@ -1,7 +1,14 @@
 #!/bin/dash
 
+#check the repo exists
 if  [ ! -d .tigger ];then
     >&2 echo "tigger-add: error: tigger repository directory .tigger not found" # stder
     exit 1
 fi
+
+if [ $# -gt 0 ]; then
+    1>&2 echo "usage: tigger-log"
+    exit 1
+fi
+
 sort -r < .tigger/.log

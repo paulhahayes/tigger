@@ -46,12 +46,13 @@ rm a
 4restart() {
 rm -r -f .tigger
 ./tigger-init
-echo 1 >a
-./tigger-add a
+touch a b c
+./tigger-add a b c
 ./tigger-commit -m hello
-rm a
-./tigger-add a
-./tigger-status
+touch d e f
+./tigger-add d e f
+./tigger-branch new
+./tigger-checkout new
 }
 
 #!/bin/dash
@@ -85,4 +86,22 @@ touch b
 ./tigger-branch b2
 ./tigger-checkout b2
 
+}
+
+change () {
+rm -r -f .tigger
+./tigger-init
+echo hello >a
+./tigger-add a
+./tigger-commit -m commit-A
+./tigger-branch b1
+echo world >>a
+./tigger-checkout b1
+./tigger-checkout master
+./tigger-add a
+./tigger-checkout b1
+./tigger-checkout master
+./tigger-commit -a -m commit-B
+./tigger-checkout b1
+./tigger-checkout master
 }

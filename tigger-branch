@@ -91,10 +91,12 @@ elif [ "$#" -eq 1 ]; then
     # make a new branch
     mkdir -p .tigger/branches/"$TARGETBRANCH"
     mkdir -p .tigger/index/."$TARGETBRANCH".0
+    
     cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/branches/"$TARGETBRANCH"/
     # add the files to be ready to commited
     cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/index/."$TARGETBRANCH".0
     echo "$CURRENTCOMMIT" > .tigger/branches/"$TARGETBRANCH"/.commitindex
+    echo 0 > .tigger/branches/"$TARGETBRANCH"/.branchindex
 else 
     1>&2 echo "usage: tigger-branch [-d] <branch>"
     exit 1

@@ -1,15 +1,17 @@
 #!/bin/dash
 
-
+ # check repo is initalised
 if [ ! -d .tigger ];then 
     >&2 echo tigger-commit: error: tigger repository directory .tigger not found
 fi
 
+ # check usage
 if  [ ! $# -eq 2 ] && [ ! $# -eq 3 ]; then
     >&2 echo usage: tigger-commit [-a] -m commit-message
     exit 1
 fi
 
+# Create variables to access directories
 COMMITINDEX=$(wc -l < .tigger/.log )
 CURRENTCOMMIT=$((COMMITINDEX-1))
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
@@ -17,7 +19,7 @@ BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" 
 HEAD=."$BRANCH"."$BRANCHINDEX"
 
 
-#checks if there have been any adds
+#checks if there have been any added files
 if [ ! -d .tigger/index/"$HEAD" ]; then 
     echo nothing to commit
     exit 1
@@ -36,39 +38,39 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
     fi
     MESSAGE="$2"
 
+    # check the characters in the message
     if echo "$MESSAGE" | grep -E '^-' >/dev/null; then
         1>&2 echo "usage: girt-commit [-a] -m commit-message"
         exit 1
     fi
 
-
+    # record the commit inside the logfile
     echo "$COMMITINDEX" "$MESSAGE" >> .tigger/.log
-    echo "$COMMITINDEX" "$HEAD" "$MESSAGE" >> .tigger/.logDetail
 
-    # adds changes
-
+    # create a new commit directory
     mkdir .tigger/commits/"$COMMITINDEX"/
 
+    # copy all the new and modifed files into the new commit directory
     if find .tigger/index/"$HEAD"  -maxdepth 0  -empty | ifne false; then
         for file in .tigger/index/"$HEAD"/*; do
             cp -r "$file" .tigger/commits/"$COMMITINDEX" >/dev/null
         done
     fi
 
-
-    # set up for the next index
+    # set up the next index file
     NEWINDEX=$((BRANCHINDEX+1)) 
     touch .tigger/branches/.head/"$BRANCH"/"$NEWINDEX"
 
-    #make a new index and copy the COMMITINDEX files in
+    # make a new index directory, by default it has
+    # this was a poor design 
     mkdir -p .tigger/index/."$BRANCH"."$NEWINDEX"
     if find .tigger/index/"$HEAD"  -maxdepth 0  -empty | ifne false; then
         cp -r .tigger/index/"$HEAD"/* .tigger/index/."$BRANCH"."$NEWINDEX" >/dev/null
-    
     fi
 
     echo Committed as commit "$COMMITINDEX"
-    # update the current branch
+
+    # update the datafiles inside the branch
     cp -r .tigger/commits/"$COMMITINDEX"/* .tigger/branches/"$BRANCH"  2>/dev/null
     echo "$COMMITINDEX" > .tigger/branches/"$BRANCH"/.commitindex
     echo "$BRANCHINDEX" > .tigger/branches/"$BRANCH"/.branchindex
@@ -92,5 +94,6 @@ else
     exit 1
 fi
 
-
+# after a commit, temporarily remove the changes file
+rm -r .tigger/changes 2>/dev/null
 
