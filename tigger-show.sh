@@ -22,9 +22,9 @@ FILENAME="$(echo "$1" | cut -d ":" -f2)"
 
 #use index
 if [ -z "$COMMIT" ]; then
-    BRANCH="$(find .tigger/branches/head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
-    COMMIT="$(find ./.tigger/branches/head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
-    INDEXNAME=."$BRANCH"."$COMMIT"
+    BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
+    BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
+    INDEXNAME=."$BRANCH"."$BRANCHINDEX"
 
     if [ ! -f .tigger/index/"$INDEXNAME"/"$FILENAME" ]; then
         >&2 echo tigger-show: error: "'$FILENAME'" not found in index
