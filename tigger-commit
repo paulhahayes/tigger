@@ -46,7 +46,7 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
 
     # record the commit inside the logfile
     echo "$COMMITINDEX" "$MESSAGE" >> .tigger/.log
-
+    echo "$COMMITINDEX" "$HEAD" "$MESSAGE" >> .tigger/.logDetail
     # create a new commit directory
     mkdir .tigger/commits/"$COMMITINDEX"/
 

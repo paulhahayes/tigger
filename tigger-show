@@ -36,14 +36,14 @@ if [ -z "$COMMIT" ]; then
 
 #use commit
 else
-    
-    BRANCH="$(cut -d' ' -f1,2 .tigger/.logDetail | grep -E "^${COMMIT} " 2> /dev/null | cut -d' ' -f2 )"
-    if [ -n "$BRANCH" ]; then 
-        if [ ! -f .tigger/index/"$BRANCH"/"$FILENAME" ]; then
+
+
+    if [ -d .tigger/commits/"$COMMIT" ]; then 
+        if [ ! -f .tigger/commits/"$COMMIT"/"$FILENAME" ]; then
            >&2 echo tigger-show: error: "'$FILENAME'" not found in commit "$COMMIT"
             exit
         else
-            cat .tigger/index/"$BRANCH"/"$FILENAME"
+            cat .tigger/commits/"$COMMIT"/"$FILENAME"
         fi
     else 
        >&2 echo tigger-show: error: unknown commit "'$COMMIT'"

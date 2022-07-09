@@ -100,8 +100,8 @@ echo world >>a
 ./tigger-checkout master
 ./tigger-add a
 ./tigger-checkout b1
-./tigger-checkout master
-./tigger-commit -a -m commit-B
-./tigger-checkout b1
-./tigger-checkout master
+# ./tigger-checkout master
+# ./tigger-commit -a -m commit-B
+# ./tigger-checkout b1
+# ./tigger-checkout master
 }

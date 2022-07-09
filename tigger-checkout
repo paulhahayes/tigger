@@ -63,11 +63,11 @@ fi
 if [ -d .tigger/changes ]; then
 
     for file in $(basename -a $(find .tigger/changes -type f )); do
-        cp -r .tigger/changes/$file .tigger/index/.$TARGETBRANCH.$TARGETBRANCHINDEX
+        cp -r .tigger/changes/$file .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX"
     done
 else  
-    rm -r .tigger/index/.$TARGETBRANCH.$TARGETBRANCHINDEX/* 2>/dev/null
-    cp -r cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/index/.$TARGETBRANCH.$TARGETBRANCHINDEX 2>/dev/null
+    rm -r .tigger/index/."$TARGETBRANCH".""$TARGETBRANCH"INDEX"/* 2>/dev/null
+    cp -r cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX" 2>/dev/null
 fi
 
 mkdir -p .tigger/.headinfo
