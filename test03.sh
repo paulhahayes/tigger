@@ -1,8 +1,8 @@
 #!/bin/dash
 
 # ==============================================================================
-# test07.sh
-# test status and checkout
+# test03.sh
+# Test tigger-add test error checking occurs before any action
 # 
 # Written by: Paul Hayes
 # Structure copied from Comp2041 week 5 Tutorial - written by: Dylan Brotherston
@@ -26,20 +26,29 @@ trap 'rm * -rf "$test_dir"' INT HUP QUIT TERM EXIT
 
 
 $path/tigger-init >/dev/null
-echo hello > A
-$path/tigger-add A
-$path/tigger-commit -m "Valid commit" >/dev/null
-$path/tigger-branch new
-echo 123 >> A
-$path/tigger-checkout new >/dev/null
-rm A
-$path/tigger-checkout master >/dev/null
-$path/tigger-status > "$recived_output"
-cat > "$expected_output" <<EOF
-A - file deleted
-EOF
+touch > A B C D E
+# add an extra file F 
+$path/tigger-add A B C D E F > "$recived_output"
 
+cat > "$expected_output" <<EOF
+tigger-add: error: can not open 'F'
+EOF
 if ! diff "$expected_output" "$recived_output"; then
     echo "Failed test"
     exit 1
 fi
+# check the folder has not added any of the files
+$path/tigger-status > "$recived_output"
+cat > "$expected_output" <<EOF
+A - untracked
+B - untracked
+C - untracked
+D - untracked
+E - untracked
+EOF
+if ! diff "$expected_output" "$recived_output"; then
+    echo "Failed test"
+    exit 1
+fi
+GREEN="\033[32m"
+printf "test03 = ${GREEN}PASSED\n"

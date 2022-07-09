@@ -1,13 +1,16 @@
 #!/bin/dash
 
-if [ $# -lt 1 ]; then
-    >&2 echo "usage: tigger-add <filenames>"
-fi
-
+# check that the repo exists
 if  [ ! -d .tigger ];then
-    >&2 echo "tigger-add: error: tigger repository directory .tigger not found" # stder
+    echo "tigger-add: error: tigger repository directory .tigger not found" 
     exit 1
 fi
+
+# check the usage
+if [ $# -lt 1 ]; then
+    echo "usage: tigger-add <filenames>"
+fi
+
 
 # Verbose but safe way of getting the branch name of the current head 
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
@@ -19,13 +22,20 @@ for file in "$@"; do
 
     # check filename characters
     if ! echo "$file" | grep -Ei '^[a-z0-9_.-]*$' > /dev/null; then 
-        >&2 echo "tigger-add: error: invalid filename '$file'"
+        echo "tigger-add: error: invalid filename '$file'"
         exit 1
     fi
 
+    # check the file doesn't start with certain characters
+    if echo "$file" | grep -Ei '^([_]|[.])' >/dev/null; then
+        echo "tigger-add: error: invalid filename '$file'"
+        exit 1
+    fi
+
+
     #check file exists
     if [ ! -f "$file" ] && [ ! -f .tigger/index/"$HEAD"/"$file" ]; then
-        >&2 echo "tigger-add: error: can not open '$file'"
+        echo "tigger-add: error: can not open '$file'"
         exit
     fi
 done
@@ -37,9 +47,9 @@ for file in "$@"; do
     
     # Either add or remove the file from the index
     if [ -f "$file" ]; then 
-        cp "$file" .tigger/index/"$HEAD"
+        cp "$file" .tigger/index/"$HEAD" 2>/dev/null
     else 
-        rm -f .tigger/index/"$HEAD"/"$file"
+        rm -f .tigger/index/"$HEAD"/"$file" 2>/dev/null
     fi
 done
 

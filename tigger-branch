@@ -2,27 +2,26 @@
 
 # check repo is initalised
  if [ ! -d .tigger ];then 
-    >&2 echo "tigger-branch: error: tigger repository directory .tigger not found"
+    echo "tigger-branch: error: tigger repository directory .tigger not found"
     exit 1
 fi
 
 # check that there have been commits
 if find .tigger/commits/  -maxdepth 0 ! -empty | ifne false; then
-    >&2 echo "tigger-branch: error: this command can not be run until after the first commit"
+    echo "tigger-branch: error: this command can not be run until after the first commit"
     exit 1
 fi
 
 # Create variables to access directories
 
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
-BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
-HEAD=."$BRANCH"."$BRANCHINDEX"
+
 CURRENTCOMMIT=$(cat .tigger/branches/"$BRANCH"/.commitindex)
 
 
 # check if flags are correct
 if echo "$1" | grep -Ei '^-[^d]' >/dev/null; then
-        1>&2 echo "usage: tigger-branch [-d] <branch>"
+        echo "usage: tigger-branch [-d] <branch>"
         exit 1
 fi
 
@@ -36,7 +35,7 @@ elif [ "$1" = -d ] && [ "$#" -eq 2 ]; then
     TARGETBRANCH="$2"
 
     if echo "$TARGETBRANCH" | grep '^[-]' >/dev/null; then
-        1>&2 echo "usage: tigger-branch [-d] <branch>"
+        echo "usage: tigger-branch [-d] <branch>"
         exit 1
     fi
 
@@ -47,7 +46,7 @@ elif [ "$1" = -d ] && [ "$#" -eq 2 ]; then
     fi
     # check the that selected branch exists
     if ! [ -d .tigger/branches/"$TARGETBRANCH" ]; then
-        1>&2 echo "tigger-branch: error: branch '$TARGETBRANCH' doesn't exist"
+        echo "tigger-branch: error: branch '$TARGETBRANCH' doesn't exist"
         exit 1
     fi
 
@@ -83,7 +82,7 @@ elif [ "$#" -eq 1 ]; then
 
 
     if  [ -d .tigger/branches/"$TARGETBRANCH" ]; then
-        1>&2 echo "tigger-branch: error: branch '$1' already exists"
+        echo "tigger-branch: error: branch '$1' already exists"
         exit 1
     fi
 

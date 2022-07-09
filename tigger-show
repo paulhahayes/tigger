@@ -1,13 +1,13 @@
 #!/bin/dash
 
 if  [ ! -d .tigger ];then
-    >&2 echo "tigger-show: error: tigger repository directory .tigger not found" # stder
+    echo "tigger-show: error: tigger repository directory .tigger not found" # stder
     exit 1
 fi
 
 
 if [ $# != 1 ];then
-    >&2 echo "usage: tigger-show <commit>:<filename>"
+    echo "usage: tigger-show <commit>:<filename>"
     exit 1
 fi
 
@@ -27,7 +27,7 @@ if [ -z "$COMMIT" ]; then
     INDEXNAME=."$BRANCH"."$BRANCHINDEX"
 
     if [ ! -f .tigger/index/"$INDEXNAME"/"$FILENAME" ]; then
-        >&2 echo tigger-show: error: "'$FILENAME'" not found in index
+        echo tigger-show: error: "'$FILENAME'" not found in index
         exit 1
 
     else 
@@ -46,7 +46,7 @@ else
             cat .tigger/commits/"$COMMIT"/"$FILENAME"
         fi
     else 
-       >&2 echo tigger-show: error: unknown commit "'$COMMIT'"
+       echo tigger-show: error: unknown commit "'$COMMIT'"
     fi 
     exit
     

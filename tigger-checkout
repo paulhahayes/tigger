@@ -26,11 +26,11 @@ fi
 
 # Create variables to access directories
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
-BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
-HEAD=."$BRANCH"."$BRANCHINDEX"
+
+
 
 # check that the checkout isn't for the current branch
-if [ $1 = "$BRANCH" ]; then
+if [ "$1" = "$BRANCH" ]; then
     >&2 echo "Already on '$1'"
     exit 1
 fi
@@ -42,8 +42,21 @@ CURRENTCOMMIT=$(cat .tigger/branches/"$TARGETBRANCH"/.commitindex)
 
 if ! diff .tigger/branches/"$BRANCH"/.commitindex .tigger/branches/"$TARGETBRANCH"/.commitindex >/dev/null; then
 
+    
+    # warnings
+
+
     # Remove files from the working directory that isn't commited in the target branch
-    for file in $(basename -a $(find .tigger/branches/"$BRANCH" -type f )); do
+    
+    for file in tigger/branches/"$BRANCH"/*; do
+        # check the loop worked
+        if [ ! "$file" -f ]; then
+            continue
+        else
+            file=basname (echo "$file")
+
+
+
         if ! [ -f .tigger/"$TARGETBRANCH"/"$file" ]; then
             rm -f "$file" 
         fi
@@ -53,7 +66,7 @@ if ! diff .tigger/branches/"$BRANCH"/.commitindex .tigger/branches/"$TARGETBRANC
     for file in $(basename -a $(find  .tigger/branches/"$TARGETBRANCH" -type f )); do
         # don't add the datafiles
         if ! [ "$file" = ".commitindex" ] && ! [ "$file" = ".branchindex" ];then
-            cp .tigger/branches/$TARGETBRANCH/$file .
+            cp .tigger/branches/"$TARGETBRANCH"/"$file" .
         fi
     done
 fi
@@ -63,22 +76,22 @@ fi
 if [ -d .tigger/changes ]; then
 
     for file in $(basename -a $(find .tigger/changes -type f )); do
-        cp -r .tigger/changes/$file .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX"
+        cp -r .tigger/changes/"$file" .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX"
     done
 else  
-    rm -r .tigger/index/."$TARGETBRANCH".""$TARGETBRANCH"INDEX"/* 2>/dev/null
+    rm -r .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX"/* 2>/dev/null
     cp -r cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX" 2>/dev/null
 fi
 
 mkdir -p .tigger/.headinfo
-cp -R .tigger/branches/.head/"$BRANCH" .tigger/.headinfo
+cp -r .tigger/branches/.head/"$BRANCH" .tigger/.headinfo
 rm -r .tigger/branches/.head/"$BRANCH"
 if ! cp -R .tigger/.headinfo/"$TARGETBRANCH" tigger/branches/.head/ 2>/dev/null; then
     mkdir .tigger/branches/.head/"$TARGETBRANCH" && touch .tigger/branches/.head/"$TARGETBRANCH"/0
 else
 rm -r .tigger/.headinfo/"$TARGETBRANCH"
 fi
+
 echo "Switched to branch '$TARGETBRANCH'"
-exit 0
 
 

@@ -2,12 +2,12 @@
  
  # check repo is initalised
  if [ ! -d .tigger ];then 
-    >&2 echo "tigger-rm: error: tigger repository directory .tigger not found"
+    echo "tigger-rm: error: tigger repository directory .tigger not found"
     exit 1
 fi
 # check for incorrect usage
 if  [ $# -lt 1 ]; then
-    >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+    echo "usage: tigger-rm [--force] [--cached] <filenames>"
     exit 1
 fi
 
@@ -40,7 +40,7 @@ for file in "$@"; do
 
     # check for correct use of flags
     if echo "$file" | grep -Eiv '((--cached)$|(--force)$|^([a-z0-9]))' >/dev/null; then 
-        >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+        echo "usage: tigger-rm [--force] [--cached] <filenames>"
         exit 1
     fi
 
@@ -48,7 +48,7 @@ for file in "$@"; do
         # used to prevent situations like <./tigger-rm <file> --cached --force 
         if [ "$FLAG" != "--cached" ] && [ "$FLAG" != "--force" ]; then
 
-            >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+            echo "usage: tigger-rm [--force] [--cached] <filenames>"
             exit 1
         else
             # count the --cached 
@@ -57,7 +57,7 @@ for file in "$@"; do
     elif [ "$file" = "--force" ]; then
         # used to prevent situations like <./tigger-rm <file> --cached --force 
         if [ "$FLAG" != "--cached" ] && [ "$FLAG" != "--force" ]; then
-            >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+            echo "usage: tigger-rm [--force] [--cached] <filenames>"
             exit 1
         else
             # count the --force
@@ -75,7 +75,7 @@ done
 
 # if the flags are not strictly at the front of the arguments the program exits
 if [ "$NOTFLAG" -eq 0 ]; then 
-    >&2 echo "usage: tigger-rm [--force] [--cached] <filenames>"
+    echo "usage: tigger-rm [--force] [--cached] <filenames>"
     exit 1
 fi
 
@@ -99,7 +99,7 @@ if [ "$FORCED" -gt 0 ];then
 
         # Exit program if the file cannot be found in the index 
         if [ ! -f "$INDEXFILE" ]; then
-            >&2 echo tigger-rm: error: "'$file'" is not in the tigger repository
+            echo tigger-rm: error: "'$file'" is not in the tigger repository
             exit 1
         fi
     done
@@ -125,7 +125,7 @@ elif [ "$CACHED" -gt 0 ]; then
         
         # check the state of the changes to the file
         if ! cmp -s "$file" "$INDEXFILE" && ! cmp -s "$INDEXFILE" "$REPOFILE"; then
-            >&2 echo "tigger-rm: error: '$file' in index is different to both the working file and the repository"
+            echo "tigger-rm: error: '$file' in index is different to both the working file and the repository"
             exit 1
         fi
      
@@ -141,25 +141,25 @@ else
 
         # check the file is in the index
         if [ ! -f "$INDEXFILE" ]; then
-            >&2 echo tigger-rm: error: "'$file'" is not in the tigger repository
+            echo tigger-rm: error: "'$file'" is not in the tigger repository
             exit 1
         fi
         
         # check if the file is modifed but hasn't been commit
         if ! cmp "$file" "$REPOFILE" -s && cmp -s "$INDEXFILE" "$REPOFILE"; then
-            >&2 echo "tigger-rm: error: '$file' in the repository is different to the working file"
+            echo "tigger-rm: error: '$file' in the repository is different to the working file"
             exit 1
         fi
 
         # check the state of the changes to the file
         if ! cmp -s "$file" "$INDEXFILE" && ! cmp -s "$file" "$REPOFILE"; then
-            >&2 echo "tigger-rm: error: '$file' in index is different to both the working file and the repository"
+            echo "tigger-rm: error: '$file' in index is different to both the working file and the repository"
             exit 1
         fi
         
         # check if the file is modifed but hasn't been commit
         if ! cmp -s "$INDEXFILE" "$REPOFILE"; then
-            >&2 echo "tigger-rm: error: '$file' has staged changes in the index"
+            echo "tigger-rm: error: '$file' has staged changes in the index"
             exit 1
         fi
 

@@ -2,8 +2,8 @@
 
 # ==============================================================================
 # test00.sh
-# Test tigger-commit for mutlple legitimate commits.
-#
+# Test tigger-commit for mutlple commits.
+# 
 # Written by: Paul Hayes
 # Structure copied from Comp2041 week 5 Tutorial - written by: Dylan Brotherston
 # Date: 2022-07-04
@@ -31,7 +31,7 @@ cat > "$expected_output" <<EOF
 Initialized empty tigger repository in .tigger
 EOF
 
-./tigger-init > "$recived_output" 2>&1
+tigger-init > "$recived_output" 2>&1
 
 if ! diff "$expected_output" "$recived_output"; then
     echo "Failed test"
@@ -44,10 +44,10 @@ echo "First" > a
 
 # add a file to the repository staging area
 
-./tigger-add a
+tigger-add a
 
 # commit the file 
-./tigger-commit -m "added a" > "$recived_output"
+tigger-commit -m "added a" > "$recived_output"
 
 cat > "$expected_output" <<EOF
 Committed as commit 0
@@ -64,10 +64,10 @@ echo "Second" > b
 
 # add a file to the repository staging area
 
-./tigger-add b
+tigger-add b
 
 # commit the file 
-./tigger-commit -m "added b" > "$recived_output"
+tigger-commit -m "added b" > "$recived_output"
 
 cat > "$expected_output" <<EOF
 Committed as commit 1
@@ -80,7 +80,7 @@ fi
 
 # commit b again
 
-./tigger-commit -m "added b" > "$recived_output"
+tigger-commit -m "added b" > "$recived_output"
 
 cat > "$expected_output" <<EOF
 nothing to commit
@@ -92,7 +92,7 @@ if ! diff "$expected_output" "$recived_output"; then
 fi
 
 # again with -a flag
-./tigger-commit -a -m "added b" > "$recived_output"
+tigger-commit -a -m "added b" > "$recived_output"
 
 cat > "$expected_output" <<EOF
 nothing to commit

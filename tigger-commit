@@ -32,7 +32,7 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
     if [ -d .tigger/commits/"$CURRENTCOMMIT" ]; then
            
         if  diff .tigger/commits/"$CURRENTCOMMIT" .tigger/index/"$HEAD" >/dev/null; then
-            >&2 echo nothing to commit
+            echo nothing to commit
             exit 1
         fi
     fi
@@ -40,7 +40,7 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
 
     # check the characters in the message
     if echo "$MESSAGE" | grep -E '^-' >/dev/null; then
-        1>&2 echo "usage: girt-commit [-a] -m commit-message"
+        echo "usage: girt-commit [-a] -m commit-message"
         exit 1
     fi
 

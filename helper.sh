@@ -105,3 +105,24 @@ echo world >>a
 # ./tigger-checkout b1
 # ./tigger-checkout master
 }
+
+check () {
+    rm -r -f .tigger
+    2041 tigger-init
+    touch A B C
+    2041 tigger-add A B C
+    2041 tigger-commit -m hello
+    2041 tigger-branch new
+    2041 tigger-checkout new
+    echo changes >> A
+    2041 tigger-add A
+    2041 tigger-checkout master
+    2041 tigger-add A
+}
+
+R() {
+    for file in test/*; do
+
+    echo $file
+    done
+}

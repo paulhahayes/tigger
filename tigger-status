@@ -2,7 +2,7 @@
 
 # check repo is initalised
  if [ ! -d .tigger ];then 
-    >&2 echo "tigger-status: error: tigger repository directory .tigger not found"
+    echo "tigger-status: error: tigger repository directory .tigger not found"
     exit 1
 fi
 
@@ -10,7 +10,7 @@ fi
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
 BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
 HEAD=."$BRANCH"."$BRANCHINDEX"
-CURRENTCOMMIT=$(cat .tigger/branches/"$BRANCH"/.commitindex)
+CURRENTCOMMIT=$(cat .tigger/branches/"$BRANCH"/.commitindex) 2>/dev/null
 
 # Iterate over a list of all file names in the current directory and subdirectories
 for file in $(basename -a $(find . -type f) | sort | uniq); do
