@@ -26,12 +26,12 @@ recived_output="$(mktemp)"
 trap 'rm * -rf "$test_dir"' INT HUP QUIT TERM EXIT
 
 
-$path/tigger-init > "$recived_output" 2>&1
+"$path"/tigger-init > "$recived_output" 2>&1
 
 
 # test bad first character
 echo "." > .DOTFILE
-$path/tigger-add .DOTFILE > "$recived_output"
+"$path"/tigger-add .DOTFILE > "$recived_output"
 cat > "$expected_output" <<EOF
 tigger-add: error: invalid filename '.DOTFILE'
 EOF
@@ -42,7 +42,7 @@ if ! diff "$expected_output" "$recived_output"; then
 fi
 # test invalid filename regex
 echo '$1000' > '$$$$'
-$path/tigger-add '$$$$' > "$recived_output"
+"$path"/tigger-add '$$$$' > "$recived_output"
 cat > "$expected_output" <<EOF
 tigger-add: error: invalid filename '\$\$\$\$'
 EOF
@@ -55,8 +55,8 @@ fi
 
 # test a bad commit name
 touch valid.txt
-$path/tigger-add valid.txt
-$path/tigger-commit -m "-badmessage" > "$recived_output"
+"$path"/tigger-add valid.txt
+"$path"/tigger-commit -m "-badmessage" > "$recived_output"
 
 cat > "$expected_output" <<EOF
 usage: girt-commit [-a] -m commit-message
@@ -68,3 +68,5 @@ if ! diff "$expected_output" "$recived_output"; then
 fi
 
 
+GREEN="\033[32m"
+printf "test01 = ${GREEN}PASSED\n"

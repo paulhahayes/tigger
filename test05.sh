@@ -25,12 +25,12 @@ recived_output="$(mktemp)"
 trap 'rm * -rf "$test_dir"' INT HUP QUIT TERM EXIT
 
 
-$path/tigger-init >/dev/null
+"$path"/tigger-init >/dev/null
 echo hello > A
-$path/tigger-add A
-$path/tigger-commit -m "Valid commit" >/dev/null
-$path/tigger-branch new 
-$path/tigger-branch > "$recived_output"
+"$path"/tigger-add A
+"$path"/tigger-commit -m "Valid commit" >/dev/null
+"$path"/tigger-branch new 
+"$path"/tigger-branch > "$recived_output"
 
 
 cat > "$expected_output" <<EOF
@@ -43,8 +43,8 @@ if ! diff "$expected_output" "$recived_output"; then
     exit 1
 fi
 
-$path/tigger-branch -d new >/dev/null
-$path/tigger-branch > "$recived_output"
+"$path"/tigger-branch -d new >/dev/null
+"$path"/tigger-branch > "$recived_output"
 
 
 cat > "$expected_output" <<EOF
@@ -55,3 +55,6 @@ if ! diff "$expected_output" "$recived_output"; then
     echo "Failed test"
     exit 1
 fi
+
+GREEN="\033[32m"
+printf "test05 = ${GREEN}PASSED\n"

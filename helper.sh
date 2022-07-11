@@ -121,8 +121,45 @@ check () {
 }
 
 R() {
-    for file in test/*; do
-
-    echo $file
-    done
+        rm -r -f .tigger
+./tigger-init
+echo 0 >level0
+./tigger-add level0
+./tigger-commit -m root
+./tigger-branch b0
+./tigger-branch b1
+./tigger-checkout b0
+echo 0 >level1
+./tigger-add level1
+./tigger-commit -m 0
+./tigger-checkout b1
+echo 1 >level1
+./tigger-add level1
+./tigger-commit -m 1
+./tigger-checkout b0
+./tigger-branch b00
+./tigger-branch b01
+./tigger-checkout b1
+./tigger-branch b10
+./tigger-branch b11
+./tigger-checkout b00
+echo 00 >level2
+./tigger-add level2
+./tigger-commit -m 00
+./tigger-checkout b01
+echo 01 >level2
+./tigger-add level2
+./tigger-commit -m 01
+./tigger-checkout b10
+echo 10 >level2
+./tigger-add level2
+./tigger-commit -m 10
+./tigger-checkout b11
+echo 11 >level2
+./tigger-add level2
+./tigger-commit -m 11
+./tigger-checkout master
+./tigger-log
+./tigger-checkout b1
+./tigger-log
 }

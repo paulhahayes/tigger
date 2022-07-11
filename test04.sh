@@ -25,13 +25,23 @@ recived_output="$(mktemp)"
 
 trap 'rm * -rf "$test_dir"' INT HUP QUIT TERM EXIT
 
+"
+$path"/tigger-init > "$recived_output" >/dev/null
+echo hello > A"
+$path"/tigger-add A"
+$path"/tigger-commit -m "FIRST" >/dev/null
+"
+$path"/tigger-rm --cached --force name --cached > "$recived_output"
+cat > "$expected_output" <<EOF
+usage: tigger-rm [--force] [--cached] <filenames>
+EOF
 
-$path/tigger-init > "$recived_output" >/dev/null
-echo hello > A
-$path/tigger-add A
-$path/tigger-commit -m "FIRST" >/dev/null
-
-$path/tigger-rm --cached --force name --cached > "$recived_output"
+if ! diff "$expected_output" "$recived_output"; then
+    echo "Failed test"
+    exit 1
+fi
+"
+$path"/tigger-rm --cached --force name -invalidname > "$recived_output"
 cat > "$expected_output" <<EOF
 usage: tigger-rm [--force] [--cached] <filenames>
 EOF
@@ -41,12 +51,5 @@ if ! diff "$expected_output" "$recived_output"; then
     exit 1
 fi
 
-$path/tigger-rm --cached --force name -invalidname > "$recived_output"
-cat > "$expected_output" <<EOF
-usage: tigger-rm [--force] [--cached] <filenames>
-EOF
-
-if ! diff "$expected_output" "$recived_output"; then
-    echo "Failed test"
-    exit 1
-fi
+GREEN="\033[32m"
+printf "test04 = ${GREEN}PASSED\n"

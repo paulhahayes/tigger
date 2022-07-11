@@ -15,9 +15,7 @@ fi
 # Create variables to access directories
 
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
-
-CURRENTCOMMIT=$(cat .tigger/branches/"$BRANCH"/.commitindex)
-
+CURRENTCOMMIT="$(tail -1 < .tigger/branches/"$BRANCH"/.commitindex 2>/dev/null)"
 
 # check if flags are correct
 if echo "$1" | grep -Ei '^-[^d]' >/dev/null; then
@@ -41,56 +39,96 @@ elif [ "$1" = -d ] && [ "$#" -eq 2 ]; then
 
     #check the that selected branch isn't master
     if [ "$TARGETBRANCH" = "master" ]; then
-        1>&2 echo "tigger-branch: error: can not delete branch 'master'"
+        echo "tigger-branch: error: can not delete branch 'master'"
         exit 1
     fi
+
+    
+    #cannot delete current head
+    if [ "$TARGETBRANCH" = .tigger/branches/.head/"$TARGETBRANCH" ]; then
+        echo "tigger-branch: error: internal error error: Cannot delete branch '$TARGETBRANCH'"
+        exit 1
+    fi
+
+
     # check the that selected branch exists
     if ! [ -d .tigger/branches/"$TARGETBRANCH" ]; then
         echo "tigger-branch: error: branch '$TARGETBRANCH' doesn't exist"
         exit 1
     fi
 
+
+        # unmerged changes
+    TARGETCOMMIT=$( tail -1 < .tigger/branches/"$TARGETBRANCH"/.commitindex )
+    SHAREDCOMMIT=""
+    for COMMITS in .tigger/commits/*; do
+        COMMITINDEX=$(basename "$COMMITS")
+        if grep -Fx "$COMMITINDEX" .tigger/branches/"$BRANCH"/.commitindex >/dev/null; then
+            if grep -Fx "$COMMITINDEX" .tigger/branches/"$TARGETBRANCH"/.commitindex >/dev/null; then
+                SHAREDCOMMIT=0
+         
+            fi
+        else 
+        SHAREDCOMMIT=1
+        fi
+    done
+
+    if [ -n "$SHAREDCOMMIT" ]; then
+        if [ "$SHAREDCOMMIT" -eq 1 ]; then
+            for file in .tigger/branches/"$TARGETBRANCH"/*; do
+                CURRFILE=$(basename "$file")
+                if ! cmp -s .tigger/branches/"$BRANCH"/"$CURRFILE" .tigger/commits/"$TARGETCOMMIT"/"$CURRFILE"; then
+                    echo "tigger-branch: error: branch '$TARGETBRANCH' has unmerged changes"
+                    exit 1
+                fi
+            done
+        fi
+    fi
+
     # delete the branch from the branches directory
     rm -r .tigger/branches/"$TARGETBRANCH"
  
-    # remove each index
-    for index in $(find .tigger/index/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;); do
-    if echo "$index" | grep -E "^(."$TARGETINDEX".[0-9]*)" >/dev/null; then
+    # creates a list of filenames and store in a tempfile this was done to kepe shellcheck happy
+    TEMPFILE="$(mktemp)"
+    find .tigger/index/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \; > "$TEMPFILE"
+
+    while read -r index; do
+    if echo "$index" | grep -E "^(.$TARGETINDEX.[0-9]*)" >/dev/null; then
        rm -r .tigger/index/"$index"
     fi
-    done
+    done < "$TEMPFILE"
     echo "Deleted branch '$TARGETBRANCH'"
-
+    rm -r "$TEMPFILE"
+# create branch
 elif [ "$#" -eq 1 ]; then
 
+    # error checking
     TARGETBRANCH="$1"
-    
+    # first character of branch cannot be _ or .
     if echo "$TARGETBRANCH" | grep -Ei '^([_]|[.])' >/dev/null; then
         echo "tigger-branch: error: invalid filename '$TARGETBRANCH'"
         exit 1
     fi
-
+    # a branch cannot be all numbers
     if echo "$TARGETBRANCH" | grep -Ei '^([0-9]*)$' >/dev/null; then
         echo "tigger-branch: error: invalid filename '$TARGETBRANCH'"
         exit 1
     fi
-
+    # bad characters
     if echo "$TARGETBRANCH" | grep -Ei '[^a-z0-9_.-]' >/dev/null; then
         echo "tigger-branch: error: invalid filename '$TARGETBRANCH'"
         exit 1
     fi
-
-
+    # check if branc already exists
     if  [ -d .tigger/branches/"$TARGETBRANCH" ]; then
         echo "tigger-branch: error: branch '$1' already exists"
         exit 1
     fi
 
-
-    # make a new branch
+    # make a new branch 
     mkdir -p .tigger/branches/"$TARGETBRANCH"
     mkdir -p .tigger/index/."$TARGETBRANCH".0
-    
+
     cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/branches/"$TARGETBRANCH"/
     # add the files to be ready to commited
     cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/index/."$TARGETBRANCH".0

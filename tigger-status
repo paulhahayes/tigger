@@ -10,10 +10,13 @@ fi
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
 BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
 HEAD=."$BRANCH"."$BRANCHINDEX"
-CURRENTCOMMIT=$(cat .tigger/branches/"$BRANCH"/.commitindex) 2>/dev/null
+CURRENTCOMMIT=$( tail -1 < .tigger/branches/"$BRANCH"/.commitindex ) 2>/dev/null
 
 # Iterate over a list of all file names in the current directory and subdirectories
-for file in $(basename -a $(find . -type f) | sort | uniq); do
+
+TEMPFILE="$(mktemp)"
+find . -type f -exec basename -a {} \; | sort | uniq > "$TEMPFILE"
+while read -r file; do
 
     # variables used to compare the files in the current directory against
     INDEXFILE=.tigger/index/"$HEAD"/"$file"
@@ -70,11 +73,7 @@ for file in $(basename -a $(find . -type f) | sort | uniq); do
     # the file has been found in the the directoires and now is checked for changes
     if [ -f "$file" ] && [ -f "$INDEXFILE" ] && [  -f "$REPOFILE" ]; then
 
-        # all the files are the same
-        if cmp -s "$file" "$INDEXFILE" && cmp -s "$file" "$REPOFILE"; then
-            echo "$file - same as repo"
-		    continue
-        fi
+
 
         # all the files are different
         if ! cmp -s "$file" "$INDEXFILE" && ! cmp -s "$file" "$REPOFILE" && ! cmp -s "$INDEXFILE" "$REPOFILE"; then
@@ -92,5 +91,12 @@ for file in $(basename -a $(find . -type f) | sort | uniq); do
             echo "$file - file changed, changes staged for commit"
         fi
 
+
+        if cmp -s "$file" "$REPOFILE"; then
+            echo "$file - same as repo"
+		    continue
+        fi
+
     fi
-done
+done < "$TEMPFILE"
+rm -r "$TEMPFILE"

@@ -1,5 +1,5 @@
 #!/bin/dash
-
+export PATH="$PATH:$PWD"
  # check repo is initalised
 if [ ! -d .tigger ];then 
     >&2 echo tigger-commit: error: tigger repository directory .tigger not found
@@ -46,7 +46,8 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
 
     # record the commit inside the logfile
     echo "$COMMITINDEX" "$MESSAGE" >> .tigger/.log
-    echo "$COMMITINDEX" "$HEAD" "$MESSAGE" >> .tigger/.logDetail
+    echo "$COMMITINDEX" "$MESSAGE" >> .tigger/branches/.head/"$BRANCH"/.log
+    echo "$COMMITINDEX" "$BRANCH" "$MESSAGE" >> .tigger/.logDetail
     # create a new commit directory
     mkdir .tigger/commits/"$COMMITINDEX"/
 
@@ -72,7 +73,7 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
 
     # update the datafiles inside the branch
     cp -r .tigger/commits/"$COMMITINDEX"/* .tigger/branches/"$BRANCH"  2>/dev/null
-    echo "$COMMITINDEX" > .tigger/branches/"$BRANCH"/.commitindex
+    echo "$COMMITINDEX" >> .tigger/branches/"$BRANCH"/.commitindex
     echo "$BRANCHINDEX" > .tigger/branches/"$BRANCH"/.branchindex
 
 # commit all
@@ -90,7 +91,7 @@ elif [ "$1" = "-a" ] && [ "$2" = "-m" ] && [ -n "$3" ]; then
 
 
 else 
-    >&2 echo usage: tigger-commit [-a] -m commit-message
+    echo usage: tigger-commit [-a] -m commit-message
     exit 1
 fi
 

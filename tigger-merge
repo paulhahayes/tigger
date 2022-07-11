@@ -1,0 +1,153 @@
+#!/bin/dash
+
+# NOTE: ONLY IMPLEMENTED ERROR CHECKING *
+
+# check repo is initialised.
+export PATH="$PATH:$PWD"
+if ! [ -d .tigger ]
+then
+    echo "tigger-merge: error: tigger repository directory .tigger not found"
+    exit 1
+fi
+
+# check that there have been commits
+if find .tigger/commits/  -maxdepth 0 ! -empty | ifne false; then
+    echo "tigger-branch: error: this command can not be run until after the first commit"
+    exit 1
+fi
+
+MESSAGE=""
+
+
+if [ -z "$2" ]; then 
+    echo tigger-merge: error: empty commit message
+    exit 1
+fi
+
+if [  "$#" -eq 1 ] || [ "$#" -ne 3 ]; then
+    echo "usage: tigger-merge <branch|commit> -m message"
+    exit 1
+fi
+
+if [ "$2" = "-m" ]; then
+    MESSAGE="$3"
+else
+    echo "usage: tigger-merge <branch|commit> -m message"
+    exit 1
+fi
+
+if [ -z "$MESSAGE" ]; then
+    echo "tigger-merge: error: empty commit message"
+    exit 1
+fi
+
+INCOMMIT="$1"
+INBRANCH="$1"
+USECOMMIT=0
+#check commit
+if ! [ -d .tigger/commits/"$INCOMMIT"/ ]; then
+    USECOMMIT=1
+    if ! [ -d .tigger/branches/"$INBRANCH" ]; then
+        if echo "$INCOMMIT" | grep -E '^([0-9]+)$' >/dev/null; then
+            echo "tigger-merge: error: unknown commit '$INCOMMIT'"
+            exit 1
+        fi
+        echo "tigger-merge: error: unknown branch '$INBRANCH'"
+        exit 1
+    fi
+
+fi
+BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
+CURRENTCOMMIT=$( tail -1 < .tigger/branches/"$BRANCH"/.commitindex )
+if [ "$USECOMMIT" -eq 0 ]; then
+    #check commit isn't the same branch
+
+    if [ "$CURRENTCOMMIT" -eq "$INCOMMIT" ];then 
+        echo "Already up to date"
+        exit 1
+    fi
+    #check common commit
+    TARGETCOMMIT="$INCOMMIT"
+    SHAREDCOMMIT=""
+    for COMMITS in .tigger/commits/*; do
+
+        COMMITINDEX=$(basename "$COMMITS")
+        if grep -Fx "$COMMITINDEX" .tigger/branches/"$BRANCH"/.commitindex >/dev/null; then
+            if [ "$COMMITINDEX" -eq "$INCOMMIT" ]; then
+                SHAREDCOMMIT="$COMMITS"
+            fi
+        fi
+    done
+    if [ -z "$SHAREDCOMMIT" ]; then
+        echo error
+        exit
+    fi
+
+else
+    if [ BRANCH = "$INBRANCH" ]; then
+        echo "Already up to date"
+        exit 1
+    fi
+    TARGETCOMMIT=$( tail -1 < .tigger/branches/"$INBRANCH"/.commitindex)
+    SHAREDCOMMIT=""
+    for COMMITS in .tigger/commits/*; do
+
+        COMMITINDEX=$(basename "$COMMITS")
+        if grep -Fx "$COMMITINDEX" .tigger/branches/"$BRANCH"/.commitindex >/dev/null; then
+            if grep -Fx "$COMMITINDEX" .tigger/branches/"$INBRANCH"/.commitindex >/dev/null; then
+                SHAREDCOMMIT="$COMMITINDEX"
+            fi
+        fi
+    done
+fi
+
+
+# catalogue changes
+touch .tigger/updates.txt
+for file in .tigger/commits/"$TARGETCOMMIT"/*; do
+    CURRFILE=$(basename  "$file") >/dev/null
+    if (! cmp -s "$file" .tigger/commits/"$SHAREDCOMMIT"/"$CURRFILE"); then
+        echo "$CURRFILE" >> .tigger/updates.txt
+    fi
+
+done
+
+touch error_msg
+for file in .tigger/commits/"$CURRENTCOMMIT"/*; do
+    CURRFILE=$(basename "$file") >/dev/null
+    if ! cmp -s "$file" .tigger/commits/"$SHAREDCOMMIT"/"$CURRFILE"; then
+        if grep -Fx "$CURRFILE" .tigger/updates.txt >/dev/null; then
+            echo "$CURRFILE" >>  error_msg
+        fi
+    fi
+done
+if [ -s error_msg ];then
+    echo "tigger-merge: error: These files can not be merged:"
+    cat error_msg
+    rm -r error_msg
+    exit 1
+fi
+
+cat .tigger/.headinfo/"$INBRANCH"/.log >> .tigger/branches/.head/"$BRANCH"/.log
+
+if [ "$SHAREDCOMMIT" -eq "$CURRENTCOMMIT" ]; then
+    while read -r file; do
+    cp .tigger/commits/"$TARGETCOMMIT"/"$file" .
+    cp .tigger/commits/"$TARGETCOMMIT"/"$file" .tigger/branches/"$BRANCH"/
+    cp .tigger/commits/"$TARGETCOMMIT"/"$file" .tigger/commits/"$SHAREDCOMMIT"/
+    tigger-add "$file"
+    done < .tigger/updates.txt
+
+    echo "Fast-forward: no commit created"
+else
+    while read -r file; do
+    cp .tigger/commits/"$TARGETCOMMIT"/"$file" .
+    cp .tigger/commits/"$TARGETCOMMIT"/"$file" .tigger/branches/"$BRANCH"/
+    tigger-add "$file"
+
+done < .tigger/updates.txt
+
+    tigger-commit -m "$MESSAGE"
+fi
+rm -r .tigger/updates.txt
+rm -r error_msg

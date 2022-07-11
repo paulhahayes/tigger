@@ -10,5 +10,6 @@ if [ $# -gt 0 ]; then
     1>&2 echo "usage: tigger-log"
     exit 1
 fi
+BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
 
-sort -r < .tigger/.log
+sort -r < .tigger/branches/.head/"$BRANCH"/.log

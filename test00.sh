@@ -102,3 +102,5 @@ if ! diff "$expected_output" "$recived_output"; then
     echo "Failed test"
     exit 1
 fi
+GREEN="\033[32m"
+printf "test00 = "${GREEN}"PASSED\n"

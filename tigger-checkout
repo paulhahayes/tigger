@@ -38,59 +38,119 @@ fi
 # Create variables specific for the target branch
 TARGETBRANCH="$1"
 TARGETBRANCHINDEX=$(cat .tigger/branches/"$TARGETBRANCH"/.branchindex)
-CURRENTCOMMIT=$(cat .tigger/branches/"$TARGETBRANCH"/.commitindex)
+TARGETCOMMIT=$( tail -1 < .tigger/branches/"$TARGETBRANCH"/.commitindex ) 2>/dev/null
+CURRENTCOMMIT=$( tail -1 < .tigger/branches/"$BRANCH"/.commitindex) 2>/dev/null
 
+
+# check if the commit numbers are the same
 if ! diff .tigger/branches/"$BRANCH"/.commitindex .tigger/branches/"$TARGETBRANCH"/.commitindex >/dev/null; then
 
-    
-    # warnings
+    TEMPFILE="$(mktemp)"
+   find .tigger/commits/"$TARGETCOMMIT" -type f  -exec basename -a {} \; > "$TEMPFILE"
+
+    # error checking between commit repo and workdir files
+    while read -r file; do
+        WORKDIRCURR="$file"
+        REPOCURR=.tigger/commits/"$CURRENTCOMMIT"/"$file"
 
 
+            if [ -f "$WORKDIRCURR" ] && ! cmp -s "$WORKDIRCURR" "$REPOCURR";then
+                # creates a list of conflicts to print out
+                if [ ! -f .errormsg ]; then
+                    echo "tigger-checkout: error: Your changes to the following files would be overwritten by checkout:" > .errormsg
+                fi
+                # ammeneds the file to the list of conflicts
+                echo "$file" >> .conflicts
+            fi
+    done < "$TEMPFILE"
+    rm -r "$TEMPFILE"
+
+    TEMPFILE="$(mktemp)"
+    find .tigger/commits/"$CURRENTCOMMIT" -type f -exec basename -a {} \; > "$TEMPFILE"
+
+    # error checking the different repos
+    while read -r file; do
+
+        WORKDIRCURR="$file"
+        REPOTARGET=.tigger/commits/"$TARGETCOMMIT"/"$file"
+        REPOCURR=.tigger/commits/"$CURRENTCOMMIT"/"$file"
+        INDEXCURR=.tigger/changes/"$file"
+       
+        if [ -f "$REPOTARGET" ] && ! cmp -s "$REPOTARGET" "$REPOCURR"; then
+
+            if [ -f "$WORKDIRCURR" ] && ! cmp -s "$WORKDIRCURR" "$REPOCURR";then
+                if [ ! -f .errormsg ]; then
+                    echo "tigger-checkout: error: Your changes to the following files would be overwritten by checkout:" > .errormsg
+                fi
+                echo "$file" >> .conflicts
+            fi
+            if [ -f "$INDEXCURR" ] && ! cmp -s "$INDEXCURR" "$REPOCURR"; then
+                if [ ! -f .errormsg ]; then
+                    echo "tigger-checkout: error: Your changes to the following files would be overwritten by checkout:" > .errormsg
+                fi
+                echo "$file" >> .conflicts
+            fi
+        
+        fi
+    done < "$TEMPFILE"
+    rm -r "$TEMPFILE"
+
+    # if there was any conflicts print the message and exit
+    if [ -f .errormsg ]; then
+        sort  < .conflicts | uniq >> .errormsg
+        cat .errormsg
+        rm -r .errormsg .conflicts
+        exit 1
+    fi
+
+    TEMPFILE="$(mktemp)"
+    find .tigger/branches/"$BRANCH" -type f -exec basename -a {} \; > "$TEMPFILE"
     # Remove files from the working directory that isn't commited in the target branch
-    
-    for file in tigger/branches/"$BRANCH"/*; do
-        # check the loop worked
-        if [ ! "$file" -f ]; then
-            continue
-        else
-            file=basname (echo "$file")
-
-
-
+    while read -r file; do
         if ! [ -f .tigger/"$TARGETBRANCH"/"$file" ]; then
             rm -f "$file" 
         fi
-    done
+    done < "$TEMPFILE"
+    rm -r "$TEMPFILE"
 
+    TEMPFILE="$(mktemp)"
+    find  .tigger/branches/"$TARGETBRANCH" -type f -exec basename -a {} \; > "$TEMPFILE"
     # Add files to the target commit that might be missing or have changes
-    for file in $(basename -a $(find  .tigger/branches/"$TARGETBRANCH" -type f )); do
+    while read -r file; do
         # don't add the datafiles
         if ! [ "$file" = ".commitindex" ] && ! [ "$file" = ".branchindex" ];then
             cp .tigger/branches/"$TARGETBRANCH"/"$file" .
         fi
-    done
+    done < "$TEMPFILE"
+    rm -r "$TEMPFILE"
 fi
 
 # if there are changes in the index from other branches
 # add them to the index of the target branch
 if [ -d .tigger/changes ]; then
 
-    for file in $(basename -a $(find .tigger/changes -type f )); do
+    TEMPFILE="$(mktemp)"
+    find .tigger/changes -type f -exec basename -a {} \; > "$TEMPFILE"
+    while read -r file; do
         cp -r .tigger/changes/"$file" .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX"
-    done
+    done < "$TEMPFILE"
+    rm -r "$TEMPFILE"
 else  
     rm -r .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX"/* 2>/dev/null
-    cp -r cp -r .tigger/commits/"$CURRENTCOMMIT"/* .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX" 2>/dev/null
+    cp -r cp -r .tigger/commits/"$TARGETCOMMIT"/* .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX" 2>/dev/null
 fi
 
 mkdir -p .tigger/.headinfo
+
 cp -r .tigger/branches/.head/"$BRANCH" .tigger/.headinfo
 rm -r .tigger/branches/.head/"$BRANCH"
-if ! cp -R .tigger/.headinfo/"$TARGETBRANCH" tigger/branches/.head/ 2>/dev/null; then
-    mkdir .tigger/branches/.head/"$TARGETBRANCH" && touch .tigger/branches/.head/"$TARGETBRANCH"/0
-else
-rm -r .tigger/.headinfo/"$TARGETBRANCH"
+
+mkdir -p .tigger/branches/.head/"$TARGETBRANCH"
+cp -r .tigger/.headinfo/"$TARGETBRANCH"/.log .tigger/branches/.head/"$TARGETBRANCH" 2>/dev/null
+if ! cp -r .tigger/.headinfo/"$TARGETBRANCH"/* .tigger/branches/.head/"$TARGETBRANCH" 2>/dev/null; then
+    touch .tigger/branches/.head/"$TARGETBRANCH"/0
 fi
+
 
 echo "Switched to branch '$TARGETBRANCH'"
 

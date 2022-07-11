@@ -25,10 +25,10 @@ recived_output="$(mktemp)"
 trap 'rm * -rf "$test_dir"' INT HUP QUIT TERM EXIT
 
 
-$path/tigger-init >/dev/null
+"$path"/tigger-init >/dev/null
 touch > A B C D E
 # add an extra file F 
-$path/tigger-add A B C D E F > "$recived_output"
+"$path"/tigger-add A B C D E F > "$recived_output"
 
 cat > "$expected_output" <<EOF
 tigger-add: error: can not open 'F'
@@ -38,7 +38,7 @@ if ! diff "$expected_output" "$recived_output"; then
     exit 1
 fi
 # check the folder has not added any of the files
-$path/tigger-status > "$recived_output"
+"$path"/tigger-status > "$recived_output"
 cat > "$expected_output" <<EOF
 A - untracked
 B - untracked

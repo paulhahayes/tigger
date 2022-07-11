@@ -25,10 +25,10 @@ recived_output="$(mktemp)"
 trap 'rm * -rf "$test_dir"' INT HUP QUIT TERM EXIT
 
 
-$path/tigger-init >/dev/null
+"$path"/tigger-init >/dev/null
 echo hello > A
-$path/tigger-add A
-$path/tigger-branch NEW > "$recived_output"
+"$path"/tigger-add A
+"$path"/tigger-branch NEW > "$recived_output"
 # check index show is working
 cat > "$expected_output" <<EOF
 tigger-branch: error: this command can not be run until after the first commit
@@ -39,8 +39,8 @@ if ! diff "$expected_output" "$recived_output"; then
     exit 1
 fi
 
-$path/tigger-commit -m "Valid commit" >/dev/null
-$path/tigger-branch .NEW > "$recived_output"
+"$path"/tigger-commit -m "Valid commit" >/dev/null
+"$path"/tigger-branch .NEW > "$recived_output"
 cat > "$expected_output" <<EOF
 tigger-branch: error: invalid filename '.NEW'
 EOF
@@ -50,7 +50,7 @@ if ! diff "$expected_output" "$recived_output"; then
     exit 1
 fi
 
-$path/tigger-branch master > "$recived_output"
+"$path"/tigger-branch master > "$recived_output"
 cat > "$expected_output" <<EOF
 tigger-branch: error: branch 'master' already exists
 EOF
@@ -60,7 +60,7 @@ if ! diff "$expected_output" "$recived_output"; then
     exit 1
 fi
 
-$path/tigger-branch -d new > "$recived_output"
+"$path"/tigger-branch -d new > "$recived_output"
 cat > "$expected_output" <<EOF
 tigger-branch: error: branch 'new' doesn't exist
 EOF
@@ -69,3 +69,6 @@ if ! diff "$expected_output" "$recived_output"; then
     echo "Failed test"
     exit 1
 fi
+
+GREEN="\033[32m"
+printf "test06 = ${GREEN}PASSED\n"
