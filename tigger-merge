@@ -115,11 +115,13 @@ done
 touch error_msg
 for file in .tigger/commits/"$CURRENTCOMMIT"/*; do
     CURRFILE=$(basename "$file") >/dev/null
-    if ! cmp -s "$file" .tigger/commits/"$SHAREDCOMMIT"/"$CURRFILE"; then
-        if grep -Fx "$CURRFILE" .tigger/updates.txt >/dev/null; then
-            echo "$CURRFILE" >>  error_msg
-        fi
-    fi
+    if [ -f $CURRFILE ]; then
+        if ! cmp -s "$file" .tigger/commits/"$SHAREDCOMMIT"/"$CURRFILE"; then
+            if grep -Fx "$CURRFILE" .tigger/updates.txt >/dev/null; then
+                echo "$CURRFILE" >>  error_msg
+            fi
+         fi
+     fi
 done
 if [ -s error_msg ];then
     echo "tigger-merge: error: These files can not be merged:"
