@@ -40,23 +40,24 @@ if [ -z "$MESSAGE" ]; then
     echo "tigger-merge: error: empty commit message"
     exit 1
 fi
-
+# check if digit or string
+if [ "$1" -eq "$1" ] 2>/dev/null; then
+    USECOMMIT=0
+else
+    USECOMMIT=1
+fi
 INCOMMIT="$1"
 INBRANCH="$1"
-USECOMMIT=0
-#check commit
-if ! [ -d .tigger/commits/"$INCOMMIT"/ ]; then
-    USECOMMIT=1
-    if ! [ -d .tigger/branches/"$INBRANCH" ]; then
-        if echo "$INCOMMIT" | grep -E '^([0-9]+)$' >/dev/null; then
-            echo "tigger-merge: error: unknown commit '$INCOMMIT'"
-            exit 1
-        fi
+
+if ! [ -d .tigger/commits/"$INCOMMIT" ] && [ $USECOMMIT -eq 0 ]; then
+    echo "tigger-merge: error: unknown commit '$INCOMMIT'"
+    exit 1
+fi  
+if ! [ -d .tigger/branches/"$INBRANCH" ] && [ $USECOMMIT -eq 1 ]; then
         echo "tigger-merge: error: unknown branch '$INBRANCH'"
         exit 1
-    fi
-
 fi
+
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
 CURRENTCOMMIT=$( tail -1 < .tigger/branches/"$BRANCH"/.commitindex )
 if [ "$USECOMMIT" -eq 0 ]; then
@@ -70,11 +71,13 @@ if [ "$USECOMMIT" -eq 0 ]; then
     TARGETCOMMIT="$INCOMMIT"
     SHAREDCOMMIT=""
     for COMMITS in .tigger/commits/*; do
-
+    
         COMMITINDEX=$(basename "$COMMITS")
-        if grep -Fx "$COMMITINDEX" .tigger/branches/"$BRANCH"/.commitindex >/dev/null; then
+
+        if grep -F "$COMMITINDEX" .tigger/.headinfo/"$BRANCH"/.log | cut -d' ' -f1 >/dev/null; then
             if [ "$COMMITINDEX" -eq "$INCOMMIT" ]; then
                 SHAREDCOMMIT="$COMMITS"
+                break
             fi
         fi
     done
@@ -91,11 +94,12 @@ else
     TARGETCOMMIT=$( tail -1 < .tigger/branches/"$INBRANCH"/.commitindex)
     SHAREDCOMMIT=""
     for COMMITS in .tigger/commits/*; do
-
         COMMITINDEX=$(basename "$COMMITS")
-        if grep -Fx "$COMMITINDEX" .tigger/branches/"$BRANCH"/.commitindex >/dev/null; then
-            if grep -Fx "$COMMITINDEX" .tigger/branches/"$INBRANCH"/.commitindex >/dev/null; then
+
+        if grep -F "$COMMITINDEX" .tigger/.headinfo/"$BRANCH"/.log | cut -d' ' -f1 >/dev/null; then
+            if grep -F "$COMMITINDEX" .tigger/.headinfo/"$BRANCH"/.log | cut -d' ' -f1 >/dev/null; then
                 SHAREDCOMMIT="$COMMITINDEX"
+                break
             fi
         fi
     done
@@ -112,16 +116,15 @@ for file in .tigger/commits/"$TARGETCOMMIT"/*; do
 
 done
 
+# error handling check if curr working file is different to the commit
 touch error_msg
 for file in .tigger/commits/"$CURRENTCOMMIT"/*; do
     CURRFILE=$(basename "$file") >/dev/null
-    if [ -f $CURRFILE ]; then
-        if ! cmp -s "$file" .tigger/commits/"$SHAREDCOMMIT"/"$CURRFILE"; then
-            if grep -Fx "$CURRFILE" .tigger/updates.txt >/dev/null; then
-                echo "$CURRFILE" >>  error_msg
-            fi
-         fi
-     fi
+    if ! cmp -s "$file" .tigger/commits/"$SHAREDCOMMIT"/"$CURRFILE"; then
+        if grep -Fx "$CURRFILE" .tigger/updates.txt >/dev/null; then
+            echo "$CURRFILE" >>  error_msg
+        fi
+    fi
 done
 if [ -s error_msg ];then
     echo "tigger-merge: error: These files can not be merged:"
@@ -130,16 +133,18 @@ if [ -s error_msg ];then
     exit 1
 fi
 
+# the branches are now connected so join their commit history
 cat .tigger/.headinfo/"$INBRANCH"/.log >> .tigger/branches/.head/"$BRANCH"/.log
 
+# main difference is that no fast forward doesnt make a new commit number
 if [ "$SHAREDCOMMIT" -eq "$CURRENTCOMMIT" ]; then
     while read -r file; do
+    # update the various directories
     cp .tigger/commits/"$TARGETCOMMIT"/"$file" .
     cp .tigger/commits/"$TARGETCOMMIT"/"$file" .tigger/branches/"$BRANCH"/
     cp .tigger/commits/"$TARGETCOMMIT"/"$file" .tigger/commits/"$SHAREDCOMMIT"/
     tigger-add "$file"
     done < .tigger/updates.txt
-
     echo "Fast-forward: no commit created"
 else
     while read -r file; do
@@ -148,8 +153,9 @@ else
     tigger-add "$file"
 
 done < .tigger/updates.txt
-
+    # no ff
     tigger-commit -m "$MESSAGE"
 fi
+# remove temp files
 rm -r .tigger/updates.txt
 rm -r error_msg

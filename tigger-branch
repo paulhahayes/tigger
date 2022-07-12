@@ -129,7 +129,8 @@ elif [ "$#" -eq 1 ]; then
     mkdir -p .tigger/branches/"$TARGETBRANCH"
     mkdir -p .tigger/index/."$TARGETBRANCH".0
 
-    mkdir -p .tigger/.headinfo/"$TARGETBRANCH" && [ -f .tigger/.headinfo/"$TARGETBRANCH"/.log ] || touch .tigger/.headinfo/"$TARGETBRANCH"/.log
+    mkdir -p .tigger/.headinfo/"$TARGETBRANCH"
+    [ -f .tigger/.headinfo/"$TARGETBRANCH"/.log ] || touch .tigger/.headinfo/"$TARGETBRANCH"/.log
     cat .tigger/.headinfo/"$BRANCH"/.log >>  .tigger/.headinfo/"$TARGETBRANCH"/.log
 
 

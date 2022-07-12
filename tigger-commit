@@ -79,8 +79,8 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
 
         # make create a log to store commit history of this branch and its children
     mkdir -p .tigger/.headinfo/"$BRANCH"
-    cp -r .tigger/branches/.head/"$BRANCH"/* .tigger/.headinfo/$BRANCH
-    echo "$COMMITINDEX" "$MESSAGE" >> .tigger/.headinfo/$BRANCH/.log 
+    cp -r .tigger/branches/.head/"$BRANCH"/* .tigger/.headinfo/"$BRANCH"
+    echo "$COMMITINDEX" "$MESSAGE" >> .tigger/.headinfo/"$BRANCH"/.log 
 
 # commit all
 elif [ "$1" = "-a" ] && [ "$2" = "-m" ] && [ -n "$3" ]; then
