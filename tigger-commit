@@ -12,7 +12,7 @@ if  [ ! $# -eq 2 ] && [ ! $# -eq 3 ]; then
 fi
 
 # Create variables to access directories
-COMMITINDEX=$(wc -l < .tigger/.log )
+COMMITINDEX=$(wc -l < .tigger/logs/.masterLog )
 CURRENTCOMMIT=$((COMMITINDEX-1))
 BRANCH="$(find .tigger/branches/.head/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)"
 BRANCHINDEX="$(find ./.tigger/branches/.head/"$BRANCH"/ -type f  -printf "%f\n" | sort -r | head -1)"
@@ -45,29 +45,27 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
     fi
 
     # record the commit inside the logfile
-    echo "$COMMITINDEX" "$MESSAGE" >> .tigger/.log
+    echo "$COMMITINDEX" "$MESSAGE" >> .tigger/logs/.masterLog
     echo "$COMMITINDEX" "$MESSAGE" >> .tigger/branches/.head/"$BRANCH"/.log
-    echo "$COMMITINDEX" "$BRANCH" "$MESSAGE" >> .tigger/.logDetail
+
     # create a new commit directory
     mkdir .tigger/commits/"$COMMITINDEX"/
 
     # copy all the new and modifed files into the new commit directory
-    if find .tigger/index/"$HEAD"  -maxdepth 0  -empty | ifne false; then
-        for file in .tigger/index/"$HEAD"/*; do
+    for file in .tigger/index/"$HEAD"/*; do
+        if [ -f "$file" ]; then
             cp -r "$file" .tigger/commits/"$COMMITINDEX" >/dev/null
-        done
-    fi
+        fi
+    done
 
     # set up the next index file
     NEWINDEX=$((BRANCHINDEX+1)) 
     touch .tigger/branches/.head/"$BRANCH"/"$NEWINDEX"
 
-    # make a new index directory, by default it has
-    # this was a poor design 
+    # make a new index directory and try to copy uncommited changes into the mew 
     mkdir -p .tigger/index/."$BRANCH"."$NEWINDEX"
-    if find .tigger/index/"$HEAD"  -maxdepth 0  -empty | ifne false; then
-        cp -r .tigger/index/"$HEAD"/* .tigger/index/."$BRANCH"."$NEWINDEX" >/dev/null
-    fi
+    cp -r .tigger/index/"$HEAD"/* .tigger/index/."$BRANCH"."$NEWINDEX" 2>/dev/null
+
 
     echo Committed as commit "$COMMITINDEX"
 
@@ -77,7 +75,7 @@ if [ "$1" = "-m" ] && [ $# -eq 2 ]; then
     echo "$BRANCHINDEX" > .tigger/branches/"$BRANCH"/.branchindex
 
 
-        # make create a log to store commit history of this branch and its children
+    # make create a log to store commit history of this branch and its children
     mkdir -p .tigger/.headinfo/"$BRANCH"
     cp -r .tigger/branches/.head/"$BRANCH"/* .tigger/.headinfo/"$BRANCH"
     echo "$COMMITINDEX" "$MESSAGE" >> .tigger/.headinfo/"$BRANCH"/.log 

@@ -28,7 +28,8 @@ mkdir -p .tigger/branches/.head/master && touch .tigger/branches/.head/master/0
 mkdir .tigger/commits
 
 # create a log to document changes
-touch .tigger/.log
+mkdir -p .tigger/logs
+touch .tigger/logs/.masterLog
 
 echo "Initialized empty tigger repository in .tigger"
 

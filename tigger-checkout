@@ -77,13 +77,16 @@ if ! diff .tigger/branches/"$BRANCH"/.commitindex .tigger/branches/"$TARGETBRANC
         INDEXCURR=.tigger/changes/"$file"
        
         if [ -f "$REPOTARGET" ] && ! cmp -s "$REPOTARGET" "$REPOCURR"; then
-
+            # the most recent commit is different to the working directory file
             if [ -f "$WORKDIRCURR" ] && ! cmp -s "$WORKDIRCURR" "$REPOCURR";then
                 if [ ! -f .errormsg ]; then
+                    # create a new document to record errors
                     echo "tigger-checkout: error: Your changes to the following files would be overwritten by checkout:" > .errormsg
                 fi
+                # if the document already exists just add the file
                 echo "$file" >> .conflicts
             fi
+            # the file in the most recent 'add' index is diferent to the most recent commit
             if [ -f "$INDEXCURR" ] && ! cmp -s "$INDEXCURR" "$REPOCURR"; then
                 if [ ! -f .errormsg ]; then
                     echo "tigger-checkout: error: Your changes to the following files would be overwritten by checkout:" > .errormsg
@@ -140,14 +143,18 @@ else
     cp -r cp -r .tigger/commits/"$TARGETCOMMIT"/* .tigger/index/."$TARGETBRANCH"."$TARGETBRANCHINDEX" 2>/dev/null
 fi
 
+# update the pointer to the current head
 mkdir -p .tigger/.headinfo
 
+# save the current branches information and remove it as the the head branch
 cp -r .tigger/branches/.head/"$BRANCH" .tigger/.headinfo
 rm -r .tigger/branches/.head/"$BRANCH"
 
+# if the checkout branch has any information already saved, load it into the head branch
 mkdir -p .tigger/branches/.head/"$TARGETBRANCH"
 cp -r .tigger/.headinfo/"$TARGETBRANCH"/.log .tigger/branches/.head/"$TARGETBRANCH" 2>/dev/null
 if ! cp -r .tigger/.headinfo/"$TARGETBRANCH"/* .tigger/branches/.head/"$TARGETBRANCH" 2>/dev/null; then
+    # if not just add a branch index number
     touch .tigger/branches/.head/"$TARGETBRANCH"/0
 fi
 
